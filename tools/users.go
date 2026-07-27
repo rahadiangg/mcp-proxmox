@@ -20,13 +20,23 @@ func RegisterUserTools(s *server.MCPServer, client *proxmox.Client) {
 
 func listUsersHandler(client *proxmox.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		rawUsers, err := client.New().User.List(ctx)
+		// Read the endpoint directly. User.List().AsArray() returns values
+		// whose only field is unexported, so marshalling them produced
+		// [{},{}] -- every user's data was silently dropped.
+		envelope, err := client.GetItemList(ctx, "/access/users")
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to list users: %v", err)), nil
 		}
 
-		users := rawUsers.AsArray()
-		result, _ := json.MarshalIndent(users, "", "  ")
+		users := []interface{}{}
+		if data, ok := unwrapData(envelope).([]interface{}); ok {
+			users = data
+		}
+
+		result, err := json.MarshalIndent(users, "", "  ")
+		if err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Failed to encode users: %v", err)), nil
+		}
 		return mcp.NewToolResultText(string(result)), nil
 	}
 }

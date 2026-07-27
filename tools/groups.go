@@ -79,13 +79,23 @@ func RegisterGroupWriteTools(s *server.MCPServer, client *proxmox.Client) {
 
 func listGroupsHandler(client *proxmox.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		rawGroups, err := client.New().Group.List(ctx)
+		// Read the endpoint directly. Group.List().AsArray() returns values
+		// whose only field is unexported, so marshalling them produced
+		// [{},{}] -- every group's data was silently dropped.
+		envelope, err := client.GetItemList(ctx, "/access/groups")
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to list groups: %v", err)), nil
 		}
 
-		groups := rawGroups.AsArray()
-		result, _ := json.MarshalIndent(groups, "", "  ")
+		groups := []interface{}{}
+		if data, ok := unwrapData(envelope).([]interface{}); ok {
+			groups = data
+		}
+
+		result, err := json.MarshalIndent(groups, "", "  ")
+		if err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Failed to encode groups: %v", err)), nil
+		}
 		return mcp.NewToolResultText(string(result)), nil
 	}
 }
