@@ -23,14 +23,31 @@ func main() {
 	}
 
 	cfg := config.Load()
+
+	if !cfg.HasCredentials() {
+		log.Fatalf("No Proxmox credentials configured. Set PROXMOX_TOKEN_ID and " +
+			"PROXMOX_TOKEN_SECRET (recommended), or PROXMOX_USERNAME and PROXMOX_PASSWORD.")
+	}
+
+	if cfg.TLSInsecure {
+		log.Printf("WARNING: TLS certificate verification is DISABLED (PROXMOX_TLS_INSECURE=true)")
+	}
+
+	opts := proxmox.Options{
+		TLSInsecure: cfg.TLSInsecure,
+		CAFile:      cfg.CAFile,
+		Timeout:     cfg.Timeout,
+		TaskTimeout: cfg.TaskTimeout,
+	}
+
 	var client *proxmox.Client
 	var err error
 
 	// Try API token auth first, fall back to password auth
 	if cfg.TokenID != "" && cfg.TokenSecret != "" {
-		client, err = proxmox.NewClientWithToken(cfg.ApiURL, cfg.TokenID, cfg.TokenSecret)
+		client, err = proxmox.NewClientWithToken(cfg.ApiURL, cfg.TokenID, cfg.TokenSecret, opts)
 	} else {
-		client, err = proxmox.NewClient(cfg.ApiURL, cfg.Username, cfg.Password)
+		client, err = proxmox.NewClient(cfg.ApiURL, cfg.Username, cfg.Password, opts)
 	}
 	if err != nil {
 		log.Fatalf("Failed to create Proxmox client: %v", err)

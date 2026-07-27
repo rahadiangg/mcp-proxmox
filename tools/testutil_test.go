@@ -61,28 +61,31 @@ func fakePVE(t *testing.T, routes map[string]interface{}) (*proxmox.Client, *req
 			log.record(r.Method, path, "")
 		}
 
-		key := r.Method + " " + path
-		body, ok := all[key]
+		// A query-qualified route wins over the bare path, so tests can give
+		// different answers per query (e.g. /cluster/nextid?vmid=101).
+		body, ok := lookupRoute(all, r.Method, path, r.URL.RawQuery)
 		if !ok {
-			// Trailing-slash tolerance: the SDK builds some URLs with one.
-			body, ok = all[r.Method+" "+strings.TrimSuffix(path, "/")]
-		}
-		if !ok {
-			t.Errorf("fakePVE: unexpected request %s (registered: %v)", key, keysOf(all))
+			t.Errorf("fakePVE: unexpected request %s %s (registered: %v)", r.Method, path, keysOf(all))
+			w.Header().Set("Content-Type", "application/json")
 			w.WriteHeader(http.StatusNotImplemented)
-			_, _ = w.Write([]byte(`{"data":null}`))
+			_, _ = w.Write([]byte(`{"data":null,"message":"route not registered"}`))
 			return
 		}
 
 		w.Header().Set("Content-Type", "application/json")
+		if apiErr, isErr := body.(apiError); isErr {
+			w.WriteHeader(apiErr.Status)
+			_, _ = w.Write([]byte(`{"data":null,"message":"` + apiErr.Message + `"}`))
+			return
+		}
 		if err := json.NewEncoder(w).Encode(map[string]interface{}{"data": body}); err != nil {
-			t.Errorf("fakePVE: encoding response for %s: %v", key, err)
+			t.Errorf("fakePVE: encoding response for %s %s: %v", r.Method, path, err)
 		}
 	}))
 	t.Cleanup(srv.Close)
 
 	// Token auth performs no network round-trip, so the client is ready immediately.
-	client, err := proxmox.NewClientWithToken(srv.URL+"/api2/json", "root@pam!test", "secret")
+	client, err := proxmox.NewClientWithToken(srv.URL+"/api2/json", "root@pam!test", "secret", proxmox.DefaultOptions())
 	if err != nil {
 		t.Fatalf("fakePVE: building client: %v", err)
 	}
@@ -135,6 +138,31 @@ func (l *requestLog) bodyFor(method, path string) (string, bool) {
 func (l *requestLog) called(method, path string) bool {
 	_, ok := l.bodyFor(method, path)
 	return ok
+}
+
+// apiError is a route value that makes the fake reply with a Proxmox-style
+// error, which is how PVE signals things like "this VMID is already taken".
+type apiError struct {
+	Status  int
+	Message string
+}
+
+// lookupRoute resolves a request against the registered routes, preferring an
+// exact query match, then the bare path, then a trailing-slash variant.
+func lookupRoute(routes map[string]interface{}, method, path, rawQuery string) (interface{}, bool) {
+	if rawQuery != "" {
+		if body, ok := routes[method+" "+path+"?"+rawQuery]; ok {
+			return body, true
+		}
+	}
+	if body, ok := routes[method+" "+path]; ok {
+		return body, true
+	}
+	// The SDK builds some URLs with a trailing slash.
+	if body, ok := routes[method+" "+strings.TrimSuffix(path, "/")]; ok {
+		return body, true
+	}
+	return nil, false
 }
 
 func keysOf(m map[string]interface{}) []string {

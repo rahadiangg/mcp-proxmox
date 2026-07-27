@@ -3,7 +3,9 @@ package config
 import (
 	"log"
 	"os"
+	"strconv"
 	"strings"
+	"time"
 )
 
 type Config struct {
@@ -13,6 +15,10 @@ type Config struct {
 	TokenID     string
 	TokenSecret string
 	ReadOnly    bool // defaults to true (secure by default)
+	TLSInsecure bool // defaults to false (verify certificates)
+	CAFile      string
+	Timeout     time.Duration
+	TaskTimeout int
 }
 
 func Load() *Config {
@@ -22,8 +28,45 @@ func Load() *Config {
 		Password:    os.Getenv("PROXMOX_PASSWORD"),
 		TokenID:     os.Getenv("PROXMOX_TOKEN_ID"),
 		TokenSecret: os.Getenv("PROXMOX_TOKEN_SECRET"),
-		ReadOnly:    getEnvBool("PROXMOX_READ_ONLY", true), // defaults to TRUE
+		ReadOnly:    getEnvBool("PROXMOX_READ_ONLY", true),  // defaults to TRUE
+		TLSInsecure: getEnvBool("PROXMOX_TLS_INSECURE", false), // defaults to FALSE
+		CAFile:      os.Getenv("PROXMOX_CA_FILE"),
+		Timeout:     getEnvDuration("PROXMOX_HTTP_TIMEOUT", 30*time.Second),
+		TaskTimeout: getEnvInt("PROXMOX_TASK_TIMEOUT", 300),
 	}
+}
+
+// HasCredentials reports whether a usable authentication method is configured.
+func (c *Config) HasCredentials() bool {
+	return (c.TokenID != "" && c.TokenSecret != "") || (c.Username != "" && c.Password != "")
+}
+
+func getEnvDuration(key string, defaultVal time.Duration) time.Duration {
+	val := strings.TrimSpace(os.Getenv(key))
+	if val == "" {
+		return defaultVal
+	}
+	if d, err := time.ParseDuration(val); err == nil && d > 0 {
+		return d
+	}
+	// Bare numbers are a natural thing to write; read them as seconds.
+	if secs, err := strconv.Atoi(val); err == nil && secs > 0 {
+		return time.Duration(secs) * time.Second
+	}
+	log.Printf("WARNING: %s has unrecognized duration %q; using default %v", key, val, defaultVal)
+	return defaultVal
+}
+
+func getEnvInt(key string, defaultVal int) int {
+	val := strings.TrimSpace(os.Getenv(key))
+	if val == "" {
+		return defaultVal
+	}
+	if n, err := strconv.Atoi(val); err == nil && n > 0 {
+		return n
+	}
+	log.Printf("WARNING: %s has unrecognized integer %q; using default %d", key, val, defaultVal)
+	return defaultVal
 }
 
 func getEnv(key, defaultVal string) string {

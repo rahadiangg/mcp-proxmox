@@ -53,14 +53,14 @@ func listStorageHandler(client *proxmox.Client) server.ToolHandlerFunc {
 
 func getStorageStatusHandler(client *proxmox.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		node := req.GetString("node", "")
-		if node == "" {
-			return mcp.NewToolResultError("node is required"), nil
+		node, err := getRequiredNameParam(req, "node")
+		if err != nil {
+			return mcp.NewToolResultError(err.Error()), nil
 		}
 
-		storage := req.GetString("storage", "")
-		if storage == "" {
-			return mcp.NewToolResultError("storage is required"), nil
+		storage, err := getRequiredNameParam(req, "storage")
+		if err != nil {
+			return mcp.NewToolResultError(err.Error()), nil
 		}
 
 		url := fmt.Sprintf("/nodes/%s/storage/%s/status", node, storage)
@@ -76,9 +76,9 @@ func getStorageStatusHandler(client *proxmox.Client) server.ToolHandlerFunc {
 
 func getStorageConfigHandler(client *proxmox.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		storage := req.GetString("storage", "")
-		if storage == "" {
-			return mcp.NewToolResultError("storage is required"), nil
+		storage, err := getRequiredNameParam(req, "storage")
+		if err != nil {
+			return mcp.NewToolResultError(err.Error()), nil
 		}
 
 		url := fmt.Sprintf("/storage/%s", storage)

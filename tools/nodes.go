@@ -66,9 +66,9 @@ func listNodesHandler(client *proxmox.Client) server.ToolHandlerFunc {
 
 func getNodeStatusHandler(client *proxmox.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		node := req.GetString("node", "")
-		if node == "" {
-			return mcp.NewToolResultError("node is required"), nil
+		node, err := getRequiredNameParam(req, "node")
+		if err != nil {
+			return mcp.NewToolResultError(err.Error()), nil
 		}
 
 		// Get node status via GetItemConfigMapStringInterface
@@ -85,38 +85,42 @@ func getNodeStatusHandler(client *proxmox.Client) server.ToolHandlerFunc {
 
 func rebootNodeHandler(client *proxmox.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		node := req.GetString("node", "")
-		if node == "" {
-			return mcp.NewToolResultError("node is required"), nil
+		node, err := getRequiredNameParam(req, "node")
+		if err != nil {
+			return mcp.NewToolResultError(err.Error()), nil
 		}
 
-		// Node reboot requires direct API call - not directly exposed in SDK
+		// Node reboot requires a direct API call - not exposed in the SDK.
+		// Post without waiting: PostWithTask blocks polling the task until it
+		// completes, but a rebooting node stops answering, so waiting can only
+		// end in a timeout.
 		url := fmt.Sprintf("/nodes/%s/status", node)
 		params := map[string]interface{}{"command": "reboot"}
-		upid, err := client.PostWithTask(ctx, params, url)
-		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Failed to reboot node: %v", err)), nil
+		if err := client.Post(ctx, params, url); err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Failed to reboot node %s: %v", node, err)), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Node %s reboot initiated. UPID: %s", node, upid)), nil
+		return mcp.NewToolResultText(fmt.Sprintf(
+			"Reboot requested for node %s. The node will stop answering the API while it restarts, so this cannot be confirmed here.", node)), nil
 	}
 }
 
 func shutdownNodeHandler(client *proxmox.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		node := req.GetString("node", "")
-		if node == "" {
-			return mcp.NewToolResultError("node is required"), nil
+		node, err := getRequiredNameParam(req, "node")
+		if err != nil {
+			return mcp.NewToolResultError(err.Error()), nil
 		}
 
-		// Node shutdown requires direct API call - not directly exposed in SDK
+		// Same reasoning as reboot: a node that is shutting down cannot report
+		// the completion of its own shutdown task.
 		url := fmt.Sprintf("/nodes/%s/status", node)
 		params := map[string]interface{}{"command": "shutdown"}
-		upid, err := client.PostWithTask(ctx, params, url)
-		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Failed to shutdown node: %v", err)), nil
+		if err := client.Post(ctx, params, url); err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Failed to shut down node %s: %v", node, err)), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Node %s shutdown initiated. UPID: %s", node, upid)), nil
+		return mcp.NewToolResultText(fmt.Sprintf(
+			"Shutdown requested for node %s. The node stops answering the API as it powers off, so this cannot be confirmed here.", node)), nil
 	}
 }

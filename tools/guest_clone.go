@@ -3,6 +3,7 @@ package tools
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
@@ -161,7 +162,12 @@ func cloneLxcContainerHandler(client *proxmox.Client) server.ToolHandlerFunc {
 			fullClone = 0
 		}
 
+		// CloneLxcContainer builds its URL from vmParams["vmid"], not from the
+		// VmRef, so omitting this key produced /nodes/<node>/lxc/%!s(<nil>)/clone
+		// and every LXC clone failed. It formats the value with %s, so this
+		// must be a string -- an int renders as %!s(int=200).
 		cloneParams := map[string]interface{}{
+			"vmid":     strconv.Itoa(vmid),
 			"newid":    newID,
 			"hostname": name,
 			"full":     fullClone,
@@ -184,17 +190,19 @@ func createTemplateHandler(client *proxmox.Client) server.ToolHandlerFunc {
 			return mcp.NewToolResultError("vmid is required"), nil
 		}
 
-		vmr := px.NewVmRef(px.GuestID(vmid))
-
-		config := map[string]interface{}{
-			"template": 1,
-		}
-
-		_, err := client.SetVmConfig(vmr, config)
+		vmr, err := resolveGuest(ctx, client, vmid)
 		if err != nil {
-			return mcp.NewToolResultError(fmt.Sprintf("Failed to convert to template: %v", err)), nil
+			return mcp.NewToolResultError(err.Error()), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("VM %d converted to template", vmid)), nil
+		// CreateTemplate posts /nodes/{node}/{type}/{vmid}/template, which is
+		// the documented conversion path. The previous implementation wrote
+		// template=1 through /config using an unresolved VmRef, producing the
+		// malformed URL /nodes///<vmid>/config -- so it never once succeeded.
+		if err := client.CreateTemplate(ctx, vmr); err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Failed to convert guest %d to template: %v", vmid, err)), nil
+		}
+
+		return mcp.NewToolResultText(fmt.Sprintf("Guest %d converted to a template", vmid)), nil
 	}
 }

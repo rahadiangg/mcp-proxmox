@@ -40,7 +40,11 @@ func RegisterLifecycleTools(s *server.MCPServer, client *proxmox.Client) {
 			mcp.Description("VM or container ID to shutdown"),
 		),
 		mcp.WithBoolean("force",
-			mcp.Description("Force shutdown (skip ACPI) - NOTE: may not be respected in old SDK versions"),
+			mcp.Description("Force stop the guest if it does not shut down cleanly in time"),
+			mcp.DefaultBool(false),
+		),
+		mcp.WithNumber("timeout",
+			mcp.Description("Seconds to wait for a clean shutdown before giving up"),
 		),
 	)
 	s.AddTool(shutdownGuestTool, shutdownGuestHandler(client))
@@ -138,9 +142,18 @@ func shutdownGuestHandler(client *proxmox.Client) server.ToolHandlerFunc {
 		}
 
 		vmr := px.NewVmRef(px.GuestID(vmid))
-		_ = req.GetBool("force", false) // force parameter accepted but not used in this SDK version
 
-		upid, err := client.ShutdownVm(ctx, vmr)
+		// StatusChangeVm takes a params map, so force is honored rather than
+		// read and discarded as it previously was.
+		params := map[string]interface{}{}
+		if req.GetBool("force", false) {
+			params["forceStop"] = 1
+		}
+		if timeout := req.GetFloat("timeout", 0); timeout > 0 {
+			params["timeout"] = int(timeout)
+		}
+
+		upid, err := client.StatusChangeVm(ctx, vmr, params, "shutdown")
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to shutdown guest: %v", err)), nil
 		}
@@ -208,12 +221,15 @@ func hibernateGuestHandler(client *proxmox.Client) server.ToolHandlerFunc {
 		}
 
 		vmr := px.NewVmRef(px.GuestID(vmid))
-		upid, err := client.StatusChangeVm(ctx, vmr, nil, "suspend")
+		// HibernateVm sends todisk=true. A plain "suspend" is what pause_guest
+		// does -- suspend to RAM -- so this tool used to report hibernation
+		// while performing exactly the same operation as pause.
+		upid, err := client.HibernateVm(ctx, vmr)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to hibernate guest: %v", err)), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Guest %d hibernated. UPID: %s", vmid, upid)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Guest %d hibernated (state saved to disk). Task status: %s", vmid, upid)), nil
 	}
 }
 
