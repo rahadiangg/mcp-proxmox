@@ -33,6 +33,7 @@ func RegisterCloneTools(s *server.MCPServer, client *proxmox.Client) {
 		),
 		mcp.WithBoolean("full",
 			mcp.Description("Create a full clone (true) or linked clone (false)"),
+			mcp.DefaultBool(true),
 		),
 		mcp.WithDestructiveHintAnnotation(false),
 	)
@@ -58,6 +59,7 @@ func RegisterCloneTools(s *server.MCPServer, client *proxmox.Client) {
 		),
 		mcp.WithBoolean("full",
 			mcp.Description("Create a full clone (true) or linked clone (false)"),
+			mcp.DefaultBool(true),
 		),
 		mcp.WithDestructiveHintAnnotation(false),
 	)
