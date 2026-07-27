@@ -120,16 +120,16 @@ func TestDiskBandwidthValidation_BandwidthParams(t *testing.T) {
 
 func TestBandwidthParamsMinValues(t *testing.T) {
 	minValues := map[string]int{
-		"mbps_rd":              1,
-		"mbps_rd_max":          1,
-		"mbps_wr":              1,
-		"mbps_wr_max":          1,
-		"iops_rd":              10,
-		"iops_rd_max":          10,
-		"iops_rd_max_length":   1,
-		"iops_wr":              10,
-		"iops_wr_max":          10,
-		"iops_wr_max_length":   1,
+		"mbps_rd":            1,
+		"mbps_rd_max":        1,
+		"mbps_wr":            1,
+		"mbps_wr_max":        1,
+		"iops_rd":            10,
+		"iops_rd_max":        10,
+		"iops_rd_max_length": 1,
+		"iops_wr":            10,
+		"iops_wr_max":        10,
+		"iops_wr_max_length": 1,
 	}
 
 	tests := []struct {
@@ -260,9 +260,9 @@ func TestCreateGuestValidation_NextVMID(t *testing.T) {
 		startID     float64
 		expectValid bool
 	}{
-		{"default start", 0, true},     // 0 means use default
+		{"default start", 0, true}, // 0 means use default
 		{"specific start", 100, true},
-		{"negative start", -1, true},   // handler doesn't validate
+		{"negative start", -1, true}, // handler doesn't validate
 		{"large start", 999999, true},
 	}
 
@@ -372,4 +372,3 @@ func TestToolRequestValidation_Helpers(t *testing.T) {
 		}
 	})
 }
-

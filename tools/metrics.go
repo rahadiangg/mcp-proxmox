@@ -11,7 +11,10 @@ import (
 )
 
 func RegisterMetricsTools(s *server.MCPServer, client *proxmox.Client) {
-	listMetricsServersTool := mcp.NewTool("list_metrics_servers", mcp.WithDescription("List all metrics servers"))
+	listMetricsServersTool := mcp.NewTool("list_metrics_servers", mcp.WithDescription("List all metrics servers"),
+		mcp.WithReadOnlyHintAnnotation(true),
+		mcp.WithIdempotentHintAnnotation(true),
+	)
 	s.AddTool(listMetricsServersTool, listMetricsServersHandler(client))
 }
 

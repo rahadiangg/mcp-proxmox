@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
+	px "github.com/Telmate/proxmox-api-go/proxmox"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/rahadiangg/mcp-proxmox/proxmox"
-	px "github.com/Telmate/proxmox-api-go/proxmox"
 )
 
 // RegisterGuestTools registers guest (VM/LXC) listing tools
@@ -22,6 +22,8 @@ func RegisterGuestTools(s *server.MCPServer, client *proxmox.Client) {
 		mcp.WithString("type",
 			mcp.Description("Filter by guest type: 'qemu' or 'lxc' (optional)"),
 		),
+		mcp.WithReadOnlyHintAnnotation(true),
+		mcp.WithIdempotentHintAnnotation(true),
 	)
 	s.AddTool(listGuestsTool, listGuestsHandler(client))
 
@@ -32,6 +34,8 @@ func RegisterGuestTools(s *server.MCPServer, client *proxmox.Client) {
 			mcp.Required(),
 			mcp.Description("VM or container ID"),
 		),
+		mcp.WithReadOnlyHintAnnotation(true),
+		mcp.WithIdempotentHintAnnotation(true),
 	)
 	s.AddTool(getGuestInfoTool, getGuestInfoHandler(client))
 
@@ -42,6 +46,8 @@ func RegisterGuestTools(s *server.MCPServer, client *proxmox.Client) {
 			mcp.Required(),
 			mcp.Description("VM or container ID"),
 		),
+		mcp.WithReadOnlyHintAnnotation(true),
+		mcp.WithIdempotentHintAnnotation(true),
 	)
 	s.AddTool(getGuestConfigTool, getGuestConfigHandler(client))
 
@@ -52,6 +58,8 @@ func RegisterGuestTools(s *server.MCPServer, client *proxmox.Client) {
 			mcp.Required(),
 			mcp.Description("VM or container ID"),
 		),
+		mcp.WithReadOnlyHintAnnotation(true),
+		mcp.WithIdempotentHintAnnotation(true),
 	)
 	s.AddTool(getGuestStatusTool, getGuestStatusHandler(client))
 
@@ -62,6 +70,8 @@ func RegisterGuestTools(s *server.MCPServer, client *proxmox.Client) {
 			mcp.Required(),
 			mcp.Description("Guest name to search for"),
 		),
+		mcp.WithReadOnlyHintAnnotation(true),
+		mcp.WithIdempotentHintAnnotation(true),
 	)
 	s.AddTool(getGuestByNameTool, getGuestByNameHandler(client))
 }

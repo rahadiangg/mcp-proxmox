@@ -4,10 +4,10 @@ import (
 	"context"
 	"fmt"
 
+	px "github.com/Telmate/proxmox-api-go/proxmox"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/rahadiangg/mcp-proxmox/proxmox"
-	px "github.com/Telmate/proxmox-api-go/proxmox"
 )
 
 // RegisterLifecycleTools registers guest lifecycle tools (start, stop, reboot, etc.)
@@ -19,6 +19,7 @@ func RegisterLifecycleTools(s *server.MCPServer, client *proxmox.Client) {
 			mcp.Required(),
 			mcp.Description("VM or container ID to start"),
 		),
+		mcp.WithDestructiveHintAnnotation(false),
 	)
 	s.AddTool(startGuestTool, startGuestHandler(client))
 
@@ -29,6 +30,7 @@ func RegisterLifecycleTools(s *server.MCPServer, client *proxmox.Client) {
 			mcp.Required(),
 			mcp.Description("VM or container ID to stop"),
 		),
+		mcp.WithDestructiveHintAnnotation(true),
 	)
 	s.AddTool(stopGuestTool, stopGuestHandler(client))
 
@@ -46,6 +48,7 @@ func RegisterLifecycleTools(s *server.MCPServer, client *proxmox.Client) {
 		mcp.WithNumber("timeout",
 			mcp.Description("Seconds to wait for a clean shutdown before giving up"),
 		),
+		mcp.WithDestructiveHintAnnotation(false),
 	)
 	s.AddTool(shutdownGuestTool, shutdownGuestHandler(client))
 
@@ -56,6 +59,7 @@ func RegisterLifecycleTools(s *server.MCPServer, client *proxmox.Client) {
 			mcp.Required(),
 			mcp.Description("VM or container ID to reboot"),
 		),
+		mcp.WithDestructiveHintAnnotation(false),
 	)
 	s.AddTool(rebootGuestTool, rebootGuestHandler(client))
 
@@ -66,6 +70,7 @@ func RegisterLifecycleTools(s *server.MCPServer, client *proxmox.Client) {
 			mcp.Required(),
 			mcp.Description("VM ID to pause"),
 		),
+		mcp.WithDestructiveHintAnnotation(false),
 	)
 	s.AddTool(pauseGuestTool, pauseGuestHandler(client))
 
@@ -76,6 +81,7 @@ func RegisterLifecycleTools(s *server.MCPServer, client *proxmox.Client) {
 			mcp.Required(),
 			mcp.Description("VM ID to resume"),
 		),
+		mcp.WithDestructiveHintAnnotation(false),
 	)
 	s.AddTool(resumeGuestTool, resumeGuestHandler(client))
 
@@ -86,6 +92,7 @@ func RegisterLifecycleTools(s *server.MCPServer, client *proxmox.Client) {
 			mcp.Required(),
 			mcp.Description("VM ID to hibernate"),
 		),
+		mcp.WithDestructiveHintAnnotation(false),
 	)
 	s.AddTool(hibernateGuestTool, hibernateGuestHandler(client))
 
@@ -96,6 +103,7 @@ func RegisterLifecycleTools(s *server.MCPServer, client *proxmox.Client) {
 			mcp.Required(),
 			mcp.Description("VM or container ID to delete"),
 		),
+		mcp.WithDestructiveHintAnnotation(true),
 	)
 	s.AddTool(deleteGuestTool, deleteGuestHandler(client))
 }

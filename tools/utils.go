@@ -5,9 +5,9 @@ import (
 	"fmt"
 	"regexp"
 
+	px "github.com/Telmate/proxmox-api-go/proxmox"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/rahadiangg/mcp-proxmox/proxmox"
-	px "github.com/Telmate/proxmox-api-go/proxmox"
 )
 
 // pveNamePattern matches Proxmox node, storage and pool names. Anchored so a

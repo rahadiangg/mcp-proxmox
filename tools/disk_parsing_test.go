@@ -57,8 +57,8 @@ func TestIsValidDiskID_Comprehensive(t *testing.T) {
 		// Invalid disk IDs - prefix with number but in wrong format
 		{"0scsi0 reversed", "0scsi0", false},
 		{"scsi010 valid", "scsi010", true}, // valid (disk 10)
-		{"scsi00 valid", "scsi00", true}, // valid (disk 0)
-		{"scsi01 valid", "scsi01", true}, // valid (disk 1)
+		{"scsi00 valid", "scsi00", true},   // valid (disk 0)
+		{"scsi01 valid", "scsi01", true},   // valid (disk 1)
 	}
 
 	for _, tt := range tests {
@@ -177,18 +177,18 @@ func TestParseDiskBandwidth_RealWorld(t *testing.T) {
 		expectedParams map[string]interface{}
 	}{
 		{
-			name:       "no bandwidth - simple config",
-			diskConfig: "local-lvm:vm-100-disk-0",
+			name:           "no bandwidth - simple config",
+			diskConfig:     "local-lvm:vm-100-disk-0",
 			expectedParams: map[string]interface{}{},
 		},
 		{
-			name:       "read limit only",
-			diskConfig: "local-lvm:vm-100-disk-0,mbps_rd=100",
+			name:           "read limit only",
+			diskConfig:     "local-lvm:vm-100-disk-0,mbps_rd=100",
 			expectedParams: map[string]interface{}{"mbps_rd": 100},
 		},
 		{
-			name:       "write limit only",
-			diskConfig: "local-lvm:vm-100-disk-0,mbps_wr=200",
+			name:           "write limit only",
+			diskConfig:     "local-lvm:vm-100-disk-0,mbps_wr=200",
 			expectedParams: map[string]interface{}{"mbps_wr": 200},
 		},
 		{
@@ -203,7 +203,7 @@ func TestParseDiskBandwidth_RealWorld(t *testing.T) {
 			name:       "with burst limits",
 			diskConfig: "local-lvm:vm-100-disk-0,mbps_rd=100,mbps_rd_max=150",
 			expectedParams: map[string]interface{}{
-				"mbps_rd": 100,
+				"mbps_rd":     100,
 				"mbps_rd_max": 150,
 			},
 		},
@@ -216,8 +216,8 @@ func TestParseDiskBandwidth_RealWorld(t *testing.T) {
 			},
 		},
 		{
-			name:       "mixed with other params",
-			diskConfig: "local-lvm:vm-100-disk-0,mbps_rd=100,size=32G,ssd=1",
+			name:           "mixed with other params",
+			diskConfig:     "local-lvm:vm-100-disk-0,mbps_rd=100,size=32G,ssd=1",
 			expectedParams: map[string]interface{}{"mbps_rd": 100},
 		},
 		{
@@ -413,4 +413,3 @@ func TestDiskConfig_EdgeCaseParsing(t *testing.T) {
 		})
 	}
 }
-

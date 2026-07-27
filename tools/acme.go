@@ -12,7 +12,10 @@ import (
 
 func RegisterACMETools(s *server.MCPServer, client *proxmox.Client) {
 	listACMEAccountsTool := mcp.NewTool("list_acme_accounts",
-		mcp.WithDescription("List all ACME accounts"))
+		mcp.WithDescription("List all ACME accounts"),
+		mcp.WithReadOnlyHintAnnotation(true),
+		mcp.WithIdempotentHintAnnotation(true),
+	)
 	s.AddTool(listACMEAccountsTool, listACMEAccountsHandler(client))
 
 	getACMEAccountTool := mcp.NewTool("get_acme_account",
@@ -21,11 +24,17 @@ func RegisterACMETools(s *server.MCPServer, client *proxmox.Client) {
 			mcp.Required(),
 			mcp.Description("ACME account name"),
 		),
+
+		mcp.WithReadOnlyHintAnnotation(true),
+		mcp.WithIdempotentHintAnnotation(true),
 	)
 	s.AddTool(getACMEAccountTool, getACMEAccountHandler(client))
 
 	listACMEPluginsTool := mcp.NewTool("list_acme_plugins",
-		mcp.WithDescription("List all ACME plugins"))
+		mcp.WithDescription("List all ACME plugins"),
+		mcp.WithReadOnlyHintAnnotation(true),
+		mcp.WithIdempotentHintAnnotation(true),
+	)
 	s.AddTool(listACMEPluginsTool, listACMEPluginsHandler(client))
 }
 
@@ -37,6 +46,8 @@ func RegisterACMEWriteTools(s *server.MCPServer, client *proxmox.Client) {
 			mcp.Required(),
 			mcp.Description("ACME account name"),
 		),
+
+		mcp.WithDestructiveHintAnnotation(true),
 	)
 	s.AddTool(deleteACMEAccountTool, deleteACMEAccountHandler(client))
 
@@ -46,6 +57,8 @@ func RegisterACMEWriteTools(s *server.MCPServer, client *proxmox.Client) {
 			mcp.Required(),
 			mcp.Description("ACME plugin name"),
 		),
+
+		mcp.WithDestructiveHintAnnotation(true),
 	)
 	s.AddTool(deleteACMEPluginTool, deleteACMEPluginHandler(client))
 }
@@ -82,9 +95,15 @@ func deleteACMEAccountHandler(client *proxmox.Client) server.ToolHandlerFunc {
 		if account == "" {
 			return mcp.NewToolResultError("account is required"), nil
 		}
-		_, err := client.DeleteAcmeAccount(ctx, account)
+		// Account deletion is an async task, so a non-OK exit status can come
+		// back with a nil error. Discarding it reported success regardless.
+		exitStatus, err := client.DeleteAcmeAccount(ctx, account)
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to delete ACME account: %v", err)), nil
+		}
+		if exitStatus != "" && exitStatus != "OK" {
+			return mcp.NewToolResultError(fmt.Sprintf(
+				"Failed to delete ACME account '%s': task ended with status %s", account, exitStatus)), nil
 		}
 		return mcp.NewToolResultText(fmt.Sprintf("ACME account '%s' deleted", account)), nil
 	}

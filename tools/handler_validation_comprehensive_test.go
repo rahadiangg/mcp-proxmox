@@ -10,13 +10,13 @@ import (
 
 func TestGuestCloneValidation_EdgeCases(t *testing.T) {
 	tests := []struct {
-		name            string
-		vmid            float64
-		newID           float64
-		targetNode      string
-		fullClone       string
-		expectError     bool
-		description      string
+		name        string
+		vmid        float64
+		newID       float64
+		targetNode  string
+		fullClone   string
+		expectError bool
+		description string
 	}{
 		{
 			name:        "valid basic clone",
@@ -24,7 +24,7 @@ func TestGuestCloneValidation_EdgeCases(t *testing.T) {
 			newID:       200,
 			targetNode:  "pve2",
 			fullClone:   "1",
-			expectError:  false,
+			expectError: false,
 			description: "All valid parameters",
 		},
 		{
@@ -33,7 +33,7 @@ func TestGuestCloneValidation_EdgeCases(t *testing.T) {
 			newID:       200,
 			targetNode:  "pve2",
 			fullClone:   "1",
-			expectError:  true,
+			expectError: true,
 			description: "Source VM ID cannot be 0",
 		},
 		{
@@ -42,7 +42,7 @@ func TestGuestCloneValidation_EdgeCases(t *testing.T) {
 			newID:       0,
 			targetNode:  "pve2",
 			fullClone:   "1",
-			expectError:  true,
+			expectError: true,
 			description: "New VM ID cannot be 0",
 		},
 		{
@@ -51,7 +51,7 @@ func TestGuestCloneValidation_EdgeCases(t *testing.T) {
 			newID:       200,
 			targetNode:  "",
 			fullClone:   "1",
-			expectError:  true,
+			expectError: true,
 			description: "Target node cannot be empty",
 		},
 		{
@@ -60,7 +60,7 @@ func TestGuestCloneValidation_EdgeCases(t *testing.T) {
 			newID:       200,
 			targetNode:  "pve2",
 			fullClone:   "1",
-			expectError:  true,
+			expectError: true,
 			description: "Negative VM ID is invalid",
 		},
 		{
@@ -69,7 +69,7 @@ func TestGuestCloneValidation_EdgeCases(t *testing.T) {
 			newID:       -1,
 			targetNode:  "pve2",
 			fullClone:   "1",
-			expectError:  true,
+			expectError: true,
 			description: "Negative new VM ID is invalid",
 		},
 	}
@@ -88,11 +88,11 @@ func TestGuestCloneValidation_EdgeCases(t *testing.T) {
 
 func TestBackupGuestValidation(t *testing.T) {
 	tests := []struct {
-		name         string
-		vmid         float64
-		storage      string
-		compression  string
-		expectError  bool
+		name        string
+		vmid        float64
+		storage     string
+		compression string
+		expectError bool
 	}{
 		{
 			name:        "valid backup",
@@ -106,21 +106,21 @@ func TestBackupGuestValidation(t *testing.T) {
 			vmid:        0,
 			storage:     "local",
 			compression: "zstd",
-			expectError:  true,
+			expectError: true,
 		},
 		{
 			name:        "empty storage",
 			vmid:        100,
 			storage:     "",
 			compression: "zstd",
-			expectError:  true,
+			expectError: true,
 		},
 		{
 			name:        "empty compression",
 			vmid:        100,
 			storage:     "local",
 			compression: "",
-			expectError:  false, // compression is optional
+			expectError: false, // compression is optional
 		},
 	}
 
@@ -155,28 +155,28 @@ func TestResizeDiskValidation(t *testing.T) {
 			vmid:        0,
 			diskID:      "scsi0",
 			size:        "+10G",
-			expectError:  true,
+			expectError: true,
 		},
 		{
 			name:        "empty disk id",
 			vmid:        100,
 			diskID:      "",
 			size:        "+10G",
-			expectError:  true,
+			expectError: true,
 		},
 		{
 			name:        "invalid disk id",
 			vmid:        100,
 			diskID:      "net0",
 			size:        "+10G",
-			expectError:  true, // net0 is not a valid disk ID
+			expectError: true, // net0 is not a valid disk ID
 		},
 		{
 			name:        "empty size",
 			vmid:        100,
 			diskID:      "scsi0",
 			size:        "",
-			expectError:  true,
+			expectError: true,
 		},
 	}
 
@@ -194,52 +194,52 @@ func TestResizeDiskValidation(t *testing.T) {
 
 func TestMigrateGuestValidation_EdgeCases(t *testing.T) {
 	tests := []struct {
-		name         string
-		vmid         float64
-		targetNode   string
+		name          string
+		vmid          float64
+		targetNode    string
 		targetStorage string
-		online       string
-		expectError  bool
+		online        string
+		expectError   bool
 	}{
 		{
-			name:         "valid migration",
-			vmid:         100,
-			targetNode:   "pve2",
+			name:          "valid migration",
+			vmid:          100,
+			targetNode:    "pve2",
 			targetStorage: "local",
-			online:       "1",
-			expectError:  false,
+			online:        "1",
+			expectError:   false,
 		},
 		{
-			name:         "zero vmid",
-			vmid:         0,
-			targetNode:   "pve2",
+			name:          "zero vmid",
+			vmid:          0,
+			targetNode:    "pve2",
 			targetStorage: "local",
-			online:       "1",
-			expectError:  true,
+			online:        "1",
+			expectError:   true,
 		},
 		{
-			name:         "empty target node",
-			vmid:         100,
-			targetNode:   "",
+			name:          "empty target node",
+			vmid:          100,
+			targetNode:    "",
 			targetStorage: "local",
-			online:       "1",
-			expectError:  true,
+			online:        "1",
+			expectError:   true,
 		},
 		{
-			name:         "with target storage",
-			vmid:         100,
-			targetNode:   "pve2",
+			name:          "with target storage",
+			vmid:          100,
+			targetNode:    "pve2",
 			targetStorage: "local-lvm",
-			online:       "1",
-			expectError:  false,
+			online:        "1",
+			expectError:   false,
 		},
 		{
-			name:         "online migration",
-			vmid:         100,
-			targetNode:   "pve2",
+			name:          "online migration",
+			vmid:          100,
+			targetNode:    "pve2",
 			targetStorage: "",
-			online:       "1",
-			expectError:  false,
+			online:        "1",
+			expectError:   false,
 		},
 	}
 
@@ -287,25 +287,25 @@ func TestGroupCreateUpdateDeleteValidation(t *testing.T) {
 			name:        "valid group",
 			groupID:     "admins",
 			comment:     "Administrators",
-			expectError:  false,
+			expectError: false,
 		},
 		{
 			name:        "empty group id",
 			groupID:     "",
 			comment:     "Administrators",
-			expectError:  true,
+			expectError: true,
 		},
 		{
 			name:        "empty comment",
 			groupID:     "admins",
 			comment:     "",
-			expectError:  false, // comment is optional
+			expectError: false, // comment is optional
 		},
 		{
 			name:        "group with spaces",
 			groupID:     "admin group",
 			comment:     "Administrators",
-			expectError:  false,
+			expectError: false,
 		},
 	}
 
@@ -330,25 +330,25 @@ func TestACMEOperationsValidation(t *testing.T) {
 			name:        "valid account",
 			account:     "user@realm!1",
 			plugin:      "",
-			expectError:  false,
+			expectError: false,
 		},
 		{
 			name:        "empty account",
 			account:     "",
 			plugin:      "",
-			expectError:  true,
+			expectError: true,
 		},
 		{
 			name:        "valid plugin",
 			account:     "",
 			plugin:      "acme-plugin",
-			expectError:  false,
+			expectError: false,
 		},
 		{
 			name:        "empty plugin",
 			account:     "user@realm!1",
 			plugin:      "",
-			expectError:  false, // plugin is optional for some ops
+			expectError: false, // plugin is optional for some ops
 		},
 	}
 
@@ -373,25 +373,25 @@ func TestSnapshotOperationsValidation(t *testing.T) {
 			name:        "valid snapshot",
 			vmid:        100,
 			snapname:    "before-upgrade",
-			expectError:  false,
+			expectError: false,
 		},
 		{
 			name:        "zero vmid",
 			vmid:        0,
 			snapname:    "before-upgrade",
-			expectError:  true,
+			expectError: true,
 		},
 		{
 			name:        "empty snapname",
 			vmid:        100,
 			snapname:    "",
-			expectError:  true,
+			expectError: true,
 		},
 		{
 			name:        "special chars in snapname",
 			vmid:        100,
 			snapname:    "snap-2024_01",
-			expectError:  false,
+			expectError: false,
 		},
 	}
 
@@ -412,9 +412,9 @@ func TestGetNextVmidValidation(t *testing.T) {
 		vmid        float64
 		expectError bool
 	}{
-		{"default (0)", 0, false},     // 0 means auto-assign
+		{"default (0)", 0, false}, // 0 means auto-assign
 		{"specific vmid", 100, false},
-		{"negative", -1, true},       // negative is invalid
+		{"negative", -1, true}, // negative is invalid
 		{"large number", 999999, false},
 	}
 
@@ -441,29 +441,29 @@ func TestStorageContentValidation(t *testing.T) {
 			name:        "valid params",
 			storage:     "local",
 			node:        "pve1",
-			contentType:  "",
-			expectError:  false,
+			contentType: "",
+			expectError: false,
 		},
 		{
 			name:        "empty storage",
 			storage:     "",
 			node:        "pve1",
-			contentType:  "",
-			expectError:  true,
+			contentType: "",
+			expectError: true,
 		},
 		{
 			name:        "empty node",
 			storage:     "local",
 			node:        "",
-			contentType:  "",
-			expectError:  true,
+			contentType: "",
+			expectError: true,
 		},
 		{
 			name:        "with content type",
 			storage:     "local",
 			node:        "pve1",
-			contentType:  "iso",
-			expectError:  false,
+			contentType: "iso",
+			expectError: false,
 		},
 	}
 
@@ -597,66 +597,66 @@ func TestDiskBandwidthSetValidation_Comprehensive(t *testing.T) {
 		expectError bool
 	}{
 		{
-			name:   "valid set single param",
-			vmid:   100,
-			diskID: "scsi0",
-			params: map[string]interface{}{"mbps_rd": 100},
+			name:        "valid set single param",
+			vmid:        100,
+			diskID:      "scsi0",
+			params:      map[string]interface{}{"mbps_rd": 100},
 			expectError: false,
 		},
 		{
-			name:   "zero vmid",
-			vmid:   0,
-			diskID: "scsi0",
-			params: map[string]interface{}{"mbps_rd": 100},
+			name:        "zero vmid",
+			vmid:        0,
+			diskID:      "scsi0",
+			params:      map[string]interface{}{"mbps_rd": 100},
 			expectError: true,
 		},
 		{
-			name:   "empty disk id",
-			vmid:   100,
-			diskID: "",
-			params: map[string]interface{}{"mbps_rd": 100},
+			name:        "empty disk id",
+			vmid:        100,
+			diskID:      "",
+			params:      map[string]interface{}{"mbps_rd": 100},
 			expectError: true,
 		},
 		{
-			name:   "invalid disk id",
-			vmid:   100,
-			diskID: "net0",
-			params: map[string]interface{}{"mbps_rd": 100},
+			name:        "invalid disk id",
+			vmid:        100,
+			diskID:      "net0",
+			params:      map[string]interface{}{"mbps_rd": 100},
 			expectError: true,
 		},
 		{
-			name:   "no bandwidth params",
-			vmid:   100,
-			diskID: "scsi0",
-			params: map[string]interface{}{},
+			name:        "no bandwidth params",
+			vmid:        100,
+			diskID:      "scsi0",
+			params:      map[string]interface{}{},
 			expectError: true,
 		},
 		{
-			name:   "below minimum mbps",
-			vmid:   100,
-			diskID: "scsi0",
-			params: map[string]interface{}{"mbps_rd": 0.5},
+			name:        "below minimum mbps",
+			vmid:        100,
+			diskID:      "scsi0",
+			params:      map[string]interface{}{"mbps_rd": 0.5},
 			expectError: false, // float values are converted to int
 		},
 		{
-			name:   "below minimum iops",
-			vmid:   100,
-			diskID: "scsi0",
-			params: map[string]interface{}{"iops_rd": 5},
+			name:        "below minimum iops",
+			vmid:        100,
+			diskID:      "scsi0",
+			params:      map[string]interface{}{"iops_rd": 5},
 			expectError: false, // int values are accepted
 		},
 		{
-			name:   "zero is unlimited (valid)",
-			vmid:   100,
-			diskID: "scsi0",
-			params: map[string]interface{}{"mbps_rd": 0, "iops_rd": 0},
+			name:        "zero is unlimited (valid)",
+			vmid:        100,
+			diskID:      "scsi0",
+			params:      map[string]interface{}{"mbps_rd": 0, "iops_rd": 0},
 			expectError: false,
 		},
 		{
-			name:   "multiple params",
-			vmid:   100,
-			diskID: "scsi0",
-			params: map[string]interface{}{"mbps_rd": 100, "mbps_wr": 200},
+			name:        "multiple params",
+			vmid:        100,
+			diskID:      "scsi0",
+			params:      map[string]interface{}{"mbps_rd": 100, "mbps_wr": 200},
 			expectError: false,
 		},
 	}

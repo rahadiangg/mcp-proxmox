@@ -5,10 +5,10 @@ import (
 	"encoding/json"
 	"fmt"
 
+	px "github.com/Telmate/proxmox-api-go/proxmox"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/rahadiangg/mcp-proxmox/proxmox"
-	px "github.com/Telmate/proxmox-api-go/proxmox"
 )
 
 // RegisterGroupTools registers read-only group management tools
@@ -16,6 +16,8 @@ func RegisterGroupTools(s *server.MCPServer, client *proxmox.Client) {
 	// List groups
 	listGroupsTool := mcp.NewTool("list_groups",
 		mcp.WithDescription("List all user groups in the cluster"),
+		mcp.WithReadOnlyHintAnnotation(true),
+		mcp.WithIdempotentHintAnnotation(true),
 	)
 	s.AddTool(listGroupsTool, listGroupsHandler(client))
 
@@ -26,6 +28,8 @@ func RegisterGroupTools(s *server.MCPServer, client *proxmox.Client) {
 			mcp.Required(),
 			mcp.Description("Group ID"),
 		),
+		mcp.WithReadOnlyHintAnnotation(true),
+		mcp.WithIdempotentHintAnnotation(true),
 	)
 	s.AddTool(getGroupTool, getGroupHandler(client))
 }
@@ -42,6 +46,7 @@ func RegisterGroupWriteTools(s *server.MCPServer, client *proxmox.Client) {
 		mcp.WithString("comment",
 			mcp.Description("Group description"),
 		),
+		mcp.WithDestructiveHintAnnotation(false),
 	)
 	s.AddTool(createGroupTool, createGroupHandler(client))
 
@@ -56,6 +61,7 @@ func RegisterGroupWriteTools(s *server.MCPServer, client *proxmox.Client) {
 			mcp.Required(),
 			mcp.Description("Group description"),
 		),
+		mcp.WithDestructiveHintAnnotation(false),
 	)
 	s.AddTool(updateGroupTool, updateGroupHandler(client))
 
@@ -66,6 +72,7 @@ func RegisterGroupWriteTools(s *server.MCPServer, client *proxmox.Client) {
 			mcp.Required(),
 			mcp.Description("Group ID to delete"),
 		),
+		mcp.WithDestructiveHintAnnotation(true),
 	)
 	s.AddTool(deleteGroupTool, deleteGroupHandler(client))
 }
@@ -131,11 +138,15 @@ func updateGroupHandler(client *proxmox.Client) server.ToolHandlerFunc {
 			return mcp.NewToolResultError("groupid is required"), nil
 		}
 
-		comment := req.GetString("comment", "")
-
+		// Only set Comment when the caller actually supplied one. Setting it
+		// unconditionally meant calling update_group without a comment wiped
+		// the group's existing description.
 		config := px.ConfigGroup{
-			Name:    px.GroupName(groupID),
-			Comment: &comment,
+			Name: px.GroupName(groupID),
+		}
+		if raw, ok := req.GetArguments()["comment"]; ok && raw != nil {
+			comment := req.GetString("comment", "")
+			config.Comment = &comment
 		}
 
 		if err := client.New().Group.Update(ctx, config); err != nil {

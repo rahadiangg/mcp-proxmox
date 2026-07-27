@@ -11,7 +11,10 @@ import (
 )
 
 func RegisterHATools(s *server.MCPServer, client *proxmox.Client) {
-	listHAGroupsTool := mcp.NewTool("list_ha_groups", mcp.WithDescription("List all high availability groups"))
+	listHAGroupsTool := mcp.NewTool("list_ha_groups", mcp.WithDescription("List all high availability groups"),
+		mcp.WithReadOnlyHintAnnotation(true),
+		mcp.WithIdempotentHintAnnotation(true),
+	)
 	s.AddTool(listHAGroupsTool, listHAGroupsHandler(client))
 }
 

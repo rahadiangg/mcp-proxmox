@@ -12,7 +12,10 @@ import (
 
 func RegisterStorageTools(s *server.MCPServer, client *proxmox.Client) {
 	// List storage
-	listStorageTool := mcp.NewTool("list_storage", mcp.WithDescription("List all storage in the cluster"))
+	listStorageTool := mcp.NewTool("list_storage", mcp.WithDescription("List all storage in the cluster"),
+		mcp.WithReadOnlyHintAnnotation(true),
+		mcp.WithIdempotentHintAnnotation(true),
+	)
 	s.AddTool(listStorageTool, listStorageHandler(client))
 
 	// Get storage status
@@ -26,6 +29,9 @@ func RegisterStorageTools(s *server.MCPServer, client *proxmox.Client) {
 			mcp.Required(),
 			mcp.Description("Storage name (e.g., 'local', 'local-lvm')"),
 		),
+
+		mcp.WithReadOnlyHintAnnotation(true),
+		mcp.WithIdempotentHintAnnotation(true),
 	)
 	s.AddTool(getStorageStatusTool, getStorageStatusHandler(client))
 
@@ -36,6 +42,9 @@ func RegisterStorageTools(s *server.MCPServer, client *proxmox.Client) {
 			mcp.Required(),
 			mcp.Description("Storage name (e.g., 'local', 'local-lvm')"),
 		),
+
+		mcp.WithReadOnlyHintAnnotation(true),
+		mcp.WithIdempotentHintAnnotation(true),
 	)
 	s.AddTool(getStorageConfigTool, getStorageConfigHandler(client))
 }

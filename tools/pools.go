@@ -11,7 +11,10 @@ import (
 )
 
 func RegisterPoolTools(s *server.MCPServer, client *proxmox.Client) {
-	listPoolsTool := mcp.NewTool("list_pools", mcp.WithDescription("List all resource pools in the cluster"))
+	listPoolsTool := mcp.NewTool("list_pools", mcp.WithDescription("List all resource pools in the cluster"),
+		mcp.WithReadOnlyHintAnnotation(true),
+		mcp.WithIdempotentHintAnnotation(true),
+	)
 	s.AddTool(listPoolsTool, listPoolsHandler(client))
 }
 

@@ -54,8 +54,8 @@ func TestACMEPluginValidation(t *testing.T) {
 func TestACMEAccountFormatValidation(t *testing.T) {
 	// Test various ACME account formats
 	tests := []struct {
-		name        string
-		account     string
+		name         string
+		account      string
 		hasSeparator bool
 	}{
 		{"valid with ! separator", "user@realm!1", true},
@@ -182,7 +182,7 @@ func TestStorageConfigParsing_Complex(t *testing.T) {
 			storage:    "local-lvm",
 			volumePath: "vm-100-disk-0",
 		},
-			{
+		{
 			name:       "with multiple colons in path",
 			diskConfig: "nfs:subdir:vm-100-disk-0",
 			storage:    "nfs",

@@ -9,16 +9,16 @@ import (
 func TestDiskBandwidthParamValidation_Minimums(t *testing.T) {
 	// Test minimum values for bandwidth parameters
 	minValues := map[string]int{
-		"mbps_rd":              1,
-		"mbps_rd_max":          1,
-		"mbps_wr":              1,
-		"mbps_wr_max":          1,
-		"iops_rd":              10,
-		"iops_rd_max":          10,
-		"iops_rd_max_length":   1,
-		"iops_wr":              10,
-		"iops_wr_max":          10,
-		"iops_wr_max_length":   1,
+		"mbps_rd":            1,
+		"mbps_rd_max":        1,
+		"mbps_wr":            1,
+		"mbps_wr_max":        1,
+		"iops_rd":            10,
+		"iops_rd_max":        10,
+		"iops_rd_max_length": 1,
+		"iops_wr":            10,
+		"iops_wr_max":        10,
+		"iops_wr_max_length": 1,
 	}
 
 	t.Run("mbps minimum values", func(t *testing.T) {
@@ -110,11 +110,11 @@ func TestDiskIDValidation_SingleDigitNumbers(t *testing.T) {
 func TestStorageContentTypes(t *testing.T) {
 	// Common storage content types
 	contentTypes := []string{
-		"",      // empty means all
-		"iso",   // ISO images
-		"rootdir", // Container templates
-		"images", // VM templates
-		"backup", // Backup files
+		"",         // empty means all
+		"iso",      // ISO images
+		"rootdir",  // Container templates
+		"images",   // VM templates
+		"backup",   // Backup files
 		"snippets", // Snippets
 	}
 
@@ -133,14 +133,14 @@ func TestStorageContentTypes(t *testing.T) {
 func TestCompressionTypes(t *testing.T) {
 	// Test common compression types for backups
 	compressionTypes := []string{
-		"",      // empty means default
-		"0",     // no compression
-		"1",     // lzop
-		"gzip",  // gzip
-		"lzo",   // lzo
-		"zstd",  // zstd
-		"fast",  // fast zlib
-		"good",  // good zlib
+		"",     // empty means default
+		"0",    // no compression
+		"1",    // lzop
+		"gzip", // gzip
+		"lzo",  // lzo
+		"zstd", // zstd
+		"fast", // fast zlib
+		"good", // good zlib
 	}
 
 	for _, ct := range compressionTypes {
@@ -157,9 +157,9 @@ func TestCompressionTypes(t *testing.T) {
 
 func TestCloneValidation_TargetStorage(t *testing.T) {
 	tests := []struct {
-		name        string
+		name          string
 		targetStorage string
-		expectError bool
+		expectError   bool
 	}{
 		{"storage specified", "local-lvm", false},
 		{"empty storage", "", false}, // target storage is optional
@@ -191,11 +191,11 @@ func TestHAOperationsValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-		hasError := tt.groupID == ""
-		if hasError != tt.expectError {
-			t.Errorf("Expected error=%v, got error=%v", tt.expectError, hasError)
-		}
-	})
+			hasError := tt.groupID == ""
+			if hasError != tt.expectError {
+				t.Errorf("Expected error=%v, got error=%v", tt.expectError, hasError)
+			}
+		})
 	}
 }
 
@@ -234,11 +234,11 @@ func TestUserOperationsValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-		hasError := tt.userID == ""
-		if hasError != tt.expectError {
-			t.Errorf("Expected error=%v, got error=%v", tt.expectError, hasError)
-		}
-	})
+			hasError := tt.userID == ""
+			if hasError != tt.expectError {
+				t.Errorf("Expected error=%v, got error=%v", tt.expectError, hasError)
+			}
+		})
 	}
 }
 
@@ -264,11 +264,11 @@ func TestNodeNetworkValidation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-		hasError := tt.node == ""
-		if hasError != tt.expectError {
-			t.Errorf("Expected error=%v, got error=%v", tt.expectError, hasError)
-		}
-	})
+			hasError := tt.node == ""
+			if hasError != tt.expectError {
+				t.Errorf("Expected error=%v, got error=%v", tt.expectError, hasError)
+			}
+		})
 	}
 }
 
@@ -338,7 +338,7 @@ func TestDiskBandwidthKeyCount(t *testing.T) {
 	bandwidthKeys := map[string]bool{
 		"mbps_rd": true, "mbps_rd_max": true, "mbps_wr": true, "mbps_wr_max": true,
 		"iops_rd": true, "iops_rd_max": true, "iops_rd_max_length": true,
-			"iops_wr": true, "iops_wr_max": true, "iops_wr_max_length": true,
+		"iops_wr": true, "iops_wr_max": true, "iops_wr_max_length": true,
 	}
 
 	expectedCount := 10
@@ -356,8 +356,8 @@ func TestVMIDRange(t *testing.T) {
 		vmid        int
 		expectValid bool
 	}{
-		{"zero", 0, false},         // 0 is invalid (required parameter)
-		{"min valid", 1, true},     // Minimum valid VM ID
+		{"zero", 0, false},     // 0 is invalid (required parameter)
+		{"min valid", 1, true}, // Minimum valid VM ID
 		{"normal", 100, true},
 		{"large", 100000000, true}, // Large VM ID
 		{"negative", -1, true},     // Negative is technically valid input
@@ -376,25 +376,25 @@ func TestVMIDRange(t *testing.T) {
 func TestToolRegistrationCategories(t *testing.T) {
 	// Test that all tool categories have been registered
 	categories := map[string]int{
-		"nodes": 3,        // list, status, network
-		"guests": 6,       // list, info, config, status, get-by-name, next-vmid
-		"storage": 4,      // list, status, config, content
-		"lifecycle": 8,    // start, stop, shutdown, reboot, pause, resume, hibernate, delete
-		"clone": 3,        // qemu, lxc, template
-		"backup": 1,       // backup guest
-		"migrate": 1,      // migrate guest
-		"disk": 2,         // resize, bandwidth
-		"users": 1,        // list users
-		"groups": 2,       // list, get
-		"acme": 3,         // list accounts, get account, list plugins
-		"ha": 1,           // list HA groups
-		"pools": 1,        // list pools
-		"metrics": 2,      // list metrics servers, list resources
-		"snapshots": 1,     // list snapshots
-		"create": 1,       // get next vmid
-		"agent": 2,        // ping, guest agent network
-		"firewall": 1,     // get firewall options
-		"network": 1,      // get guest agent network (same as agent)
+		"nodes":     3, // list, status, network
+		"guests":    6, // list, info, config, status, get-by-name, next-vmid
+		"storage":   4, // list, status, config, content
+		"lifecycle": 8, // start, stop, shutdown, reboot, pause, resume, hibernate, delete
+		"clone":     3, // qemu, lxc, template
+		"backup":    1, // backup guest
+		"migrate":   1, // migrate guest
+		"disk":      2, // resize, bandwidth
+		"users":     1, // list users
+		"groups":    2, // list, get
+		"acme":      3, // list accounts, get account, list plugins
+		"ha":        1, // list HA groups
+		"pools":     1, // list pools
+		"metrics":   2, // list metrics servers, list resources
+		"snapshots": 1, // list snapshots
+		"create":    1, // get next vmid
+		"agent":     2, // ping, guest agent network
+		"firewall":  1, // get firewall options
+		"network":   1, // get guest agent network (same as agent)
 	}
 
 	totalTools := 0
@@ -410,7 +410,7 @@ func TestToolRegistrationCategories(t *testing.T) {
 
 func TestDiskBandwidthCompleteCoverage(t *testing.T) {
 	// These tests cover edge cases in disk bandwidth functions
-	
+
 	t.Run("isValidDiskID with unicode", func(t *testing.T) {
 		// Test that unicode characters are not accepted
 		unicodeIDs := []string{"scsiñ", "virtioé", "sataï"}
@@ -420,13 +420,13 @@ func TestDiskBandwidthCompleteCoverage(t *testing.T) {
 			}
 		}
 	})
-	
+
 	t.Run("isDiskKey with empty string", func(t *testing.T) {
 		if isDiskKey("") {
 			t.Error("Empty disk key should not be valid")
 		}
 	})
-	
+
 	t.Run("parseDiskBandwidth with all params", func(t *testing.T) {
 		config := "storage:vol,mbps_rd=100,mbps_rd_max=200,mbps_wr=150,mbps_wr_max=250,iops_rd=500,iops_rd_max=1000,iops_rd_max_length=60,iops_wr=600,iops_wr_max=1200,iops_wr_max_length=60"
 		result := parseDiskBandwidth(config)
@@ -434,7 +434,7 @@ func TestDiskBandwidthCompleteCoverage(t *testing.T) {
 			t.Errorf("Expected 10 bandwidth params, got %d", len(result))
 		}
 	})
-	
+
 	t.Run("parseStorageFromConfig with only storage", func(t *testing.T) {
 		storage, volume := parseStorageFromConfig("local-lvm")
 		if storage != "local-lvm" {
@@ -444,7 +444,7 @@ func TestDiskBandwidthCompleteCoverage(t *testing.T) {
 			t.Errorf("Expected empty volume, got %q", volume)
 		}
 	})
-	
+
 	t.Run("buildDiskConfigString with nil params", func(t *testing.T) {
 		// This should just return the original config
 		result := buildDiskConfigString("storage:vol", nil)
@@ -452,7 +452,7 @@ func TestDiskBandwidthCompleteCoverage(t *testing.T) {
 			t.Errorf("Expected 'storage:vol', got %q", result)
 		}
 	})
-	
+
 	t.Run("removeBandwidthParams with no bandwidth", func(t *testing.T) {
 		result := removeBandwidthParams("storage:vol,cache=writeback,ssd=1")
 		if result != "storage:vol,cache=writeback,ssd=1" {
@@ -486,7 +486,7 @@ func TestToolHandlerNames(t *testing.T) {
 		"create_group", "update_group", "delete_group",
 		"delete_acme_account", "delete_acme_plugin",
 	}
-	
+
 	for _, name := range handlerNames {
 		t.Run("handler_"+name, func(t *testing.T) {
 			if name == "" {
@@ -501,7 +501,7 @@ func TestToolHandlerNames(t *testing.T) {
 
 func TestConfigurationPatterns(t *testing.T) {
 	// Test configuration parameter patterns
-	
+
 	t.Run("disk config patterns", func(t *testing.T) {
 		patterns := []struct {
 			name   string
@@ -516,7 +516,7 @@ func TestConfigurationPatterns(t *testing.T) {
 			{"with bandwidth", "local:vm-100-disk-0,mbps_rd=100", true},
 			{"with all bandwidth", "local:vm-100-disk-0,mbps_rd=100,mbps_wr=200,iops_rd=500", true},
 		}
-		
+
 		for _, tt := range patterns {
 			t.Run(tt.name, func(t *testing.T) {
 				// Just verify the pattern is valid
@@ -526,14 +526,14 @@ func TestConfigurationPatterns(t *testing.T) {
 			})
 		}
 	})
-	
+
 	t.Run("storage types", func(t *testing.T) {
 		storageTypes := []string{
 			"local", "local-lvm", "local-zfs", "nfs", "cifs", "pbs",
 			"rbd", "sheepdog", "glusterfs", "iscsi", "lvm", "zfs",
 			"dir", "btrfs", "cephfs", "cifs",
 		}
-		
+
 		for _, storage := range storageTypes {
 			t.Run("storage_"+storage, func(t *testing.T) {
 				if storage == "" {
@@ -542,10 +542,10 @@ func TestConfigurationPatterns(t *testing.T) {
 			})
 		}
 	})
-	
+
 	t.Run("network device types", func(t *testing.T) {
 		deviceTypes := []string{"eth", "bridge", "bond", "vlan"}
-		
+
 		for _, devType := range deviceTypes {
 			t.Run("device_"+devType, func(t *testing.T) {
 				if devType == "" {

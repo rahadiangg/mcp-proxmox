@@ -11,7 +11,10 @@ import (
 )
 
 func RegisterUserTools(s *server.MCPServer, client *proxmox.Client) {
-	listUsersTool := mcp.NewTool("list_users", mcp.WithDescription("List all users in the cluster"))
+	listUsersTool := mcp.NewTool("list_users", mcp.WithDescription("List all users in the cluster"),
+		mcp.WithReadOnlyHintAnnotation(true),
+		mcp.WithIdempotentHintAnnotation(true),
+	)
 	s.AddTool(listUsersTool, listUsersHandler(client))
 }
 

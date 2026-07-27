@@ -69,9 +69,9 @@ func TestParseStorageFromConfig_Advanced(t *testing.T) {
 
 func TestParseDiskBandwidth_Advanced(t *testing.T) {
 	tests := []struct {
-		name              string
-		diskConfig        string
-		expectedParams    map[string]int
+		name           string
+		diskConfig     string
+		expectedParams map[string]int
 	}{
 		{
 			name:       "all mbps parameters",
@@ -134,26 +134,26 @@ func TestBuildDiskConfigString_Advanced(t *testing.T) {
 		expectedContains []string
 	}{
 		{
-			name:            "add to config with existing params",
-			originalConfig:  "storage:vol,cache=writeback",
-			bandwidthParams: map[string]interface{}{"mbps_rd": 100},
+			name:             "add to config with existing params",
+			originalConfig:   "storage:vol,cache=writeback",
+			bandwidthParams:  map[string]interface{}{"mbps_rd": 100},
 			expectedContains: []string{"storage:vol", "cache=writeback", "mbps_rd=100"},
 		},
 		{
-			name:            "replace existing bandwidth",
-			originalConfig:  "storage:vol,mbps_rd=50,ssd=1",
-			bandwidthParams: map[string]interface{}{"mbps_rd": 100},
+			name:             "replace existing bandwidth",
+			originalConfig:   "storage:vol,mbps_rd=50,ssd=1",
+			bandwidthParams:  map[string]interface{}{"mbps_rd": 100},
 			expectedContains: []string{"storage:vol", "ssd=1", "mbps_rd=100"},
 		},
 		{
-			name:            "remove old bandwidth add new",
-			originalConfig:  "storage:vol,mbps_rd=50,mbps_wr=100",
-			bandwidthParams: map[string]interface{}{"iops_rd": 200},
+			name:             "remove old bandwidth add new",
+			originalConfig:   "storage:vol,mbps_rd=50,mbps_wr=100",
+			bandwidthParams:  map[string]interface{}{"iops_rd": 200},
 			expectedContains: []string{"storage:vol", "iops_rd=200"},
 		},
 		{
-			name:            "multiple new bandwidth params",
-			originalConfig:  "storage:vol",
+			name:           "multiple new bandwidth params",
+			originalConfig: "storage:vol",
 			bandwidthParams: map[string]interface{}{
 				"mbps_rd": 100,
 				"mbps_wr": 200,
@@ -180,27 +180,27 @@ func TestRemoveBandwidthParams_Advanced(t *testing.T) {
 	tests := []struct {
 		name           string
 		originalConfig string
-		expectedConfig  string
+		expectedConfig string
 	}{
 		{
 			name:           "config with all bandwidth params",
 			originalConfig: "storage:vol,mbps_rd=100,mbps_rd_max=200,mbps_wr=150,mbps_wr_max=250,iops_rd=500,iops_rd_max=1000,iops_rd_max_length=60,iops_wr=600,iops_wr_max=1200,iops_wr_max_length=60",
-			expectedConfig:  "storage:vol",
+			expectedConfig: "storage:vol",
 		},
 		{
 			name:           "config with no bandwidth",
 			originalConfig: "storage:vol,size=32G,cache=writeback,ssd=1",
-			expectedConfig:  "storage:vol,size=32G,cache=writeback,ssd=1",
+			expectedConfig: "storage:vol,size=32G,cache=writeback,ssd=1",
 		},
 		{
 			name:           "config with mixed params",
 			originalConfig: "storage:vol,mbps_rd=100,size=32G,ssd=1",
-			expectedConfig:  "storage:vol,size=32G,ssd=1",
+			expectedConfig: "storage:vol,size=32G,ssd=1",
 		},
 		{
 			name:           "empty config",
 			originalConfig: "",
-			expectedConfig:  "",
+			expectedConfig: "",
 		},
 	}
 

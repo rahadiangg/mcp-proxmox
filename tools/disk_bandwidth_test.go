@@ -110,13 +110,13 @@ func TestParseStorageFromConfig(t *testing.T) {
 
 func TestParseDiskBandwidth(t *testing.T) {
 	tests := []struct {
-		name            string
-		diskConfig      string
-		expectedParams  map[string]interface{}
+		name           string
+		diskConfig     string
+		expectedParams map[string]interface{}
 	}{
 		{
-			name:       "no bandwidth params",
-			diskConfig: "local-lvm:vm-100-disk-0",
+			name:           "no bandwidth params",
+			diskConfig:     "local-lvm:vm-100-disk-0",
 			expectedParams: map[string]interface{}{},
 		},
 		{
@@ -172,10 +172,10 @@ func TestParseDiskBandwidth(t *testing.T) {
 
 func TestBuildDiskConfigString(t *testing.T) {
 	tests := []struct {
-		name             string
-		originalConfig   string
-		bandwidthParams  map[string]interface{}
-		expectedConfig   string
+		name            string
+		originalConfig  string
+		bandwidthParams map[string]interface{}
+		expectedConfig  string
 	}{
 		{
 			name:            "add bandwidth to simple config",
@@ -184,8 +184,8 @@ func TestBuildDiskConfigString(t *testing.T) {
 			expectedConfig:  "local-lvm:vm-100-disk-0,mbps_rd=100",
 		},
 		{
-			name:           "preserve existing params",
-			originalConfig: "local-lvm:vm-100-disk-0,size=32G,ssd=1",
+			name:            "preserve existing params",
+			originalConfig:  "local-lvm:vm-100-disk-0,size=32G,ssd=1",
 			bandwidthParams: map[string]interface{}{"mbps_rd": 100},
 			expectedConfig:  "local-lvm:vm-100-disk-0,size=32G,ssd=1,mbps_rd=100",
 		},
@@ -196,8 +196,8 @@ func TestBuildDiskConfigString(t *testing.T) {
 			expectedConfig:  "local-lvm:vm-100-disk-0,size=32G",
 		},
 		{
-			name:           "replace existing bandwidth params",
-			originalConfig: "local-lvm:vm-100-disk-0,mbps_rd=50,size=32G",
+			name:            "replace existing bandwidth params",
+			originalConfig:  "local-lvm:vm-100-disk-0,mbps_rd=50,size=32G",
 			bandwidthParams: map[string]interface{}{"mbps_rd": 100},
 			expectedConfig:  "local-lvm:vm-100-disk-0,size=32G,mbps_rd=100",
 		},
@@ -307,10 +307,10 @@ func TestRemoveBandwidthParams(t *testing.T) {
 
 func TestBuildDiskConfigString_MoreEdgeCases(t *testing.T) {
 	tests := []struct {
-		name             string
-		originalConfig   string
-		bandwidthParams  map[string]interface{}
-		expectedConfig   string
+		name            string
+		originalConfig  string
+		bandwidthParams map[string]interface{}
+		expectedConfig  string
 	}{
 		{
 			name:            "empty config with bandwidth",
@@ -381,9 +381,9 @@ func TestBuildDiskConfigString_MoreEdgeCases(t *testing.T) {
 
 func TestParseDiskBandwidth_EdgeCases(t *testing.T) {
 	tests := []struct {
-		name            string
-		diskConfig      string
-		expectedParams  map[string]interface{}
+		name           string
+		diskConfig     string
+		expectedParams map[string]interface{}
 	}{
 		{
 			name:           "empty config",
@@ -496,9 +496,9 @@ func TestParseStorageFromConfig_EdgeCases(t *testing.T) {
 
 func TestDiskBandwidthParsing_ComplexCases(t *testing.T) {
 	tests := []struct {
-		name            string
-		diskConfig      string
-		expectedParams  map[string]interface{}
+		name           string
+		diskConfig     string
+		expectedParams map[string]interface{}
 	}{
 		{
 			name:           "bandwidth with zero values",
@@ -523,8 +523,8 @@ func TestDiskBandwidthParsing_ComplexCases(t *testing.T) {
 			expectedParams: map[string]interface{}{"mbps_rd": 100, "mbps_rd_max": 150, "mbps_wr": 200, "mbps_wr_max": 250},
 		},
 		{
-			name:       "all write iops params",
-			diskConfig: "local-lvm:vm-100-disk-0,iops_wr=800,iops_wr_max=900,iops_wr_max_length=120",
+			name:           "all write iops params",
+			diskConfig:     "local-lvm:vm-100-disk-0,iops_wr=800,iops_wr_max=900,iops_wr_max_length=120",
 			expectedParams: map[string]interface{}{"iops_wr": 800, "iops_wr_max": 900, "iops_wr_max_length": 120},
 		},
 	}
@@ -585,16 +585,16 @@ func TestRemoveBandwidthParams_MoreCases(t *testing.T) {
 
 func TestBuildDiskConfigString_MoreCases(t *testing.T) {
 	tests := []struct {
-		name             string
-		originalConfig   string
-		bandwidthParams  map[string]interface{}
-		expectedConfig   string
+		name            string
+		originalConfig  string
+		bandwidthParams map[string]interface{}
+		expectedConfig  string
 	}{
 		{
-			name:           "add to config with cache",
-			originalConfig: "storage:vol,cache=writeback",
+			name:            "add to config with cache",
+			originalConfig:  "storage:vol,cache=writeback",
 			bandwidthParams: map[string]interface{}{"mbps_rd": 100},
-			expectedConfig: "storage:vol,cache=writeback,mbps_rd=100",
+			expectedConfig:  "storage:vol,cache=writeback,mbps_rd=100",
 		},
 		{
 			name:            "empty bandwidth params",
@@ -617,28 +617,28 @@ func TestBuildDiskConfigString_MoreCases(t *testing.T) {
 
 func TestBuildDiskConfigString_SingleBandwidthParam(t *testing.T) {
 	tests := []struct {
-		name             string
-		originalConfig   string
-		bandwidthParams  map[string]interface{}
-		expectedConfig   string
+		name            string
+		originalConfig  string
+		bandwidthParams map[string]interface{}
+		expectedConfig  string
 	}{
 		{
-			name:           "add mbps_rd only",
-			originalConfig: "storage:vol",
+			name:            "add mbps_rd only",
+			originalConfig:  "storage:vol",
 			bandwidthParams: map[string]interface{}{"mbps_rd": 100},
-			expectedConfig: "storage:vol,mbps_rd=100",
+			expectedConfig:  "storage:vol,mbps_rd=100",
 		},
 		{
-			name:           "add mbps_wr only",
-			originalConfig: "storage:vol",
+			name:            "add mbps_wr only",
+			originalConfig:  "storage:vol",
 			bandwidthParams: map[string]interface{}{"mbps_wr": 200},
-			expectedConfig: "storage:vol,mbps_wr=200",
+			expectedConfig:  "storage:vol,mbps_wr=200",
 		},
 		{
-			name:           "add iops_rd only",
-			originalConfig: "storage:vol",
+			name:            "add iops_rd only",
+			originalConfig:  "storage:vol",
 			bandwidthParams: map[string]interface{}{"iops_rd": 500},
-			expectedConfig: "storage:vol,iops_rd=500",
+			expectedConfig:  "storage:vol,iops_rd=500",
 		},
 	}
 
@@ -655,28 +655,28 @@ func TestBuildDiskConfigString_SingleBandwidthParam(t *testing.T) {
 
 func TestBuildDiskConfigString_ExtremeValues(t *testing.T) {
 	tests := []struct {
-		name             string
-		originalConfig   string
-		bandwidthParams  map[string]interface{}
-		expectedConfig   string
+		name            string
+		originalConfig  string
+		bandwidthParams map[string]interface{}
+		expectedConfig  string
 	}{
 		{
-			name:           "very large mbps value",
-			originalConfig: "storage:vol",
+			name:            "very large mbps value",
+			originalConfig:  "storage:vol",
 			bandwidthParams: map[string]interface{}{"mbps_rd": 999999},
-			expectedConfig: "storage:vol,mbps_rd=999999",
+			expectedConfig:  "storage:vol,mbps_rd=999999",
 		},
 		{
-			name:           "zero bandwidth values",
-			originalConfig: "storage:vol",
+			name:            "zero bandwidth values",
+			originalConfig:  "storage:vol",
 			bandwidthParams: map[string]interface{}{"mbps_rd": 0, "mbps_wr": 0},
-			expectedConfig: "storage:vol,mbps_rd=0,mbps_wr=0",
+			expectedConfig:  "storage:vol,mbps_rd=0,mbps_wr=0",
 		},
 		{
-			name:           "max burst duration",
-			originalConfig: "storage:vol",
+			name:            "max burst duration",
+			originalConfig:  "storage:vol",
 			bandwidthParams: map[string]interface{}{"iops_rd_max_length": 1000},
-			expectedConfig: "storage:vol,iops_rd_max_length=1000",
+			expectedConfig:  "storage:vol,iops_rd_max_length=1000",
 		},
 	}
 
@@ -760,9 +760,12 @@ func TestParseDiskBandwidth_InvalidValues(t *testing.T) {
 			expectedParams: 0,
 		},
 		{
-			name:           "float value ignored",
+			// mbps_* are floats in the Proxmox API. This case previously
+			// asserted that a fractional limit was dropped, which meant a
+			// throttled disk was reported as having no throttle at all.
+			name:           "float value parsed",
 			diskConfig:     "storage:vol,mbps_rd=10.5",
-			expectedParams: 0,
+			expectedParams: 1,
 		},
 		{
 			name:           "negative value parsed successfully",
@@ -867,30 +870,30 @@ func TestBuildDiskConfigString_AdvancedEdgeCases(t *testing.T) {
 		expectedContains []string // check that result contains these parts
 	}{
 		{
-			name:            "empty config with bandwidth",
-			originalConfig:  "",
-			bandwidthParams: map[string]interface{}{"mbps_rd": 100},
+			name:             "empty config with bandwidth",
+			originalConfig:   "",
+			bandwidthParams:  map[string]interface{}{"mbps_rd": 100},
 			expectedContains: []string{"mbps_rd=100"},
 		},
 		{
-			name:            "config with spaces around commas",
-			originalConfig:  "storage:vol , size=32G , ssd=1",
-			bandwidthParams: map[string]interface{}{"mbps_wr": 200},
+			name:             "config with spaces around commas",
+			originalConfig:   "storage:vol , size=32G , ssd=1",
+			bandwidthParams:  map[string]interface{}{"mbps_wr": 200},
 			expectedContains: []string{"mbps_wr=200", "size=32G", "ssd=1"},
 		},
 		{
-			name:            "all bandwidth params",
-			originalConfig:  "storage:vol",
+			name:           "all bandwidth params",
+			originalConfig: "storage:vol",
 			bandwidthParams: map[string]interface{}{
-				"mbps_rd": 100,
-				"mbps_rd_max": 200,
-				"mbps_wr": 150,
-				"mbps_wr_max": 250,
-				"iops_rd": 500,
-				"iops_rd_max": 1000,
+				"mbps_rd":            100,
+				"mbps_rd_max":        200,
+				"mbps_wr":            150,
+				"mbps_wr_max":        250,
+				"iops_rd":            500,
+				"iops_rd_max":        1000,
 				"iops_rd_max_length": 60,
-				"iops_wr": 600,
-				"iops_wr_max": 1200,
+				"iops_wr":            600,
+				"iops_wr_max":        1200,
 				"iops_wr_max_length": 60,
 			},
 			expectedContains: []string{

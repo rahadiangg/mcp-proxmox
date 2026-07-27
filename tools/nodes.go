@@ -15,6 +15,8 @@ func RegisterNodeTools(s *server.MCPServer, client *proxmox.Client) {
 	// List nodes
 	listNodesTool := mcp.NewTool("list_nodes",
 		mcp.WithDescription("List all nodes in the Proxmox cluster"),
+		mcp.WithReadOnlyHintAnnotation(true),
+		mcp.WithIdempotentHintAnnotation(true),
 	)
 	s.AddTool(listNodesTool, listNodesHandler(client))
 
@@ -25,6 +27,8 @@ func RegisterNodeTools(s *server.MCPServer, client *proxmox.Client) {
 			mcp.Required(),
 			mcp.Description("Node name (e.g., 'pve1')"),
 		),
+		mcp.WithReadOnlyHintAnnotation(true),
+		mcp.WithIdempotentHintAnnotation(true),
 	)
 	s.AddTool(getNodeStatusTool, getNodeStatusHandler(client))
 }
@@ -38,6 +42,7 @@ func RegisterNodeWriteTools(s *server.MCPServer, client *proxmox.Client) {
 			mcp.Required(),
 			mcp.Description("Node name to reboot"),
 		),
+		mcp.WithDestructiveHintAnnotation(true),
 	)
 	s.AddTool(rebootNodeTool, rebootNodeHandler(client))
 
@@ -48,6 +53,7 @@ func RegisterNodeWriteTools(s *server.MCPServer, client *proxmox.Client) {
 			mcp.Required(),
 			mcp.Description("Node name to shutdown"),
 		),
+		mcp.WithDestructiveHintAnnotation(true),
 	)
 	s.AddTool(shutdownNodeTool, shutdownNodeHandler(client))
 }

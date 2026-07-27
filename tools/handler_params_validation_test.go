@@ -600,9 +600,9 @@ func TestGetNextVMIDParameterValidation(t *testing.T) {
 		startID     int
 		expectValid bool
 	}{
-		{"zero means default", 0, true},     // 0 means use default
-		{"specific start", 100, true},       // positive int is valid
-		{"negative start", -1, true},        // handler doesn't validate
+		{"zero means default", 0, true}, // 0 means use default
+		{"specific start", 100, true},   // positive int is valid
+		{"negative start", -1, true},    // handler doesn't validate
 		{"large start", 999999, true},
 	}
 
@@ -700,16 +700,16 @@ func TestDiskBandwidthParameterValidation_AllParams(t *testing.T) {
 
 	// Test minimum values for each parameter
 	minValues := map[string]int{
-		"mbps_rd":              1,
-		"mbps_rd_max":          1,
-		"mbps_wr":              1,
-		"mbps_wr_max":          1,
-		"iops_rd":              10,
-		"iops_rd_max":          10,
-		"iops_rd_max_length":   1,
-		"iops_wr":              10,
-		"iops_wr_max":          10,
-		"iops_wr_max_length":   1,
+		"mbps_rd":            1,
+		"mbps_rd_max":        1,
+		"mbps_wr":            1,
+		"mbps_wr_max":        1,
+		"iops_rd":            10,
+		"iops_rd_max":        10,
+		"iops_rd_max_length": 1,
+		"iops_wr":            10,
+		"iops_wr_max":        10,
+		"iops_wr_max_length": 1,
 	}
 
 	for param, minVal := range minValues {
@@ -1071,7 +1071,7 @@ func TestGetStorageStatusParameterValidation(t *testing.T) {
 
 func TestMoreValidationCases(t *testing.T) {
 	// Test more specific validation patterns
-	
+
 	t.Run("VM ID validation patterns", func(t *testing.T) {
 		tests := []struct {
 			name        string
@@ -1084,7 +1084,7 @@ func TestMoreValidationCases(t *testing.T) {
 			{"zero invalid", 0, false},
 			{"negative not recommended but valid input", -1, true},
 		}
-		
+
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
 				isValid := tt.vmid != 0
@@ -1094,7 +1094,7 @@ func TestMoreValidationCases(t *testing.T) {
 			})
 		}
 	})
-	
+
 	t.Run("Storage name validation", func(t *testing.T) {
 		tests := []struct {
 			name        string
@@ -1109,7 +1109,7 @@ func TestMoreValidationCases(t *testing.T) {
 			{"with numbers", "storage123", true},
 			{"with underscore", "my_storage", true},
 		}
-		
+
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
 				isValid := tt.storage != ""
@@ -1119,7 +1119,7 @@ func TestMoreValidationCases(t *testing.T) {
 			})
 		}
 	})
-	
+
 	t.Run("Node name validation", func(t *testing.T) {
 		tests := []struct {
 			name        string
@@ -1133,7 +1133,7 @@ func TestMoreValidationCases(t *testing.T) {
 			{"with numbers", "node123", true},
 			{"with underscore", "node_1", true},
 		}
-		
+
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
 				isValid := tt.node != ""
@@ -1159,7 +1159,7 @@ func TestSnapshotValidation(t *testing.T) {
 			{"numeric snapshot", 100, "123", false},
 			{"special chars snapshot", 100, "snap_v1.0", false},
 		}
-		
+
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
 				hasError := tt.vmid == 0
@@ -1175,7 +1175,7 @@ func TestSnapshotValidation(t *testing.T) {
 func TestNetworkValidation(t *testing.T) {
 	t.Run("network type validation", func(t *testing.T) {
 		validTypes := []string{"eth", "bridge", "bond", "vlan"}
-		
+
 		for _, netType := range validTypes {
 			t.Run("type_"+netType, func(t *testing.T) {
 				if len(netType) == 0 {
@@ -1201,7 +1201,7 @@ func TestGroupValidation(t *testing.T) {
 			{"with dot", "my.group", true},
 			{"with at sign", "group@pve", true},
 		}
-		
+
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
 				isValid := tt.groupID != ""

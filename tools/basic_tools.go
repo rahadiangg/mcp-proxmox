@@ -6,10 +6,10 @@ import (
 	"fmt"
 	"regexp"
 
+	px "github.com/Telmate/proxmox-api-go/proxmox"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/rahadiangg/mcp-proxmox/proxmox"
-	px "github.com/Telmate/proxmox-api-go/proxmox"
 )
 
 // diskSizePattern matches the size argument accepted by the PVE resize API:

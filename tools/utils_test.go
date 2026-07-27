@@ -210,10 +210,10 @@ func TestGetRequiredIntParam_EdgeCases(t *testing.T) {
 
 func TestGetOptionalStringParam_EdgeCases(t *testing.T) {
 	tests := []struct {
-		name     string
+		name      string
 		arguments map[string]interface{}
-		key      string
-		expected string
+		key       string
+		expected  string
 	}{
 		{
 			name:      "nil arguments",

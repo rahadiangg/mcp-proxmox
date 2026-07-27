@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"strconv"
 
+	px "github.com/Telmate/proxmox-api-go/proxmox"
 	"github.com/mark3labs/mcp-go/mcp"
 	"github.com/mark3labs/mcp-go/server"
 	"github.com/rahadiangg/mcp-proxmox/proxmox"
-	px "github.com/Telmate/proxmox-api-go/proxmox"
 )
 
 // RegisterCloneTools registers guest cloning tools
@@ -34,6 +34,7 @@ func RegisterCloneTools(s *server.MCPServer, client *proxmox.Client) {
 		mcp.WithBoolean("full",
 			mcp.Description("Create a full clone (true) or linked clone (false)"),
 		),
+		mcp.WithDestructiveHintAnnotation(false),
 	)
 	s.AddTool(cloneQemuVmTool, cloneQemuVmHandler(client))
 
@@ -58,6 +59,7 @@ func RegisterCloneTools(s *server.MCPServer, client *proxmox.Client) {
 		mcp.WithBoolean("full",
 			mcp.Description("Create a full clone (true) or linked clone (false)"),
 		),
+		mcp.WithDestructiveHintAnnotation(false),
 	)
 	s.AddTool(cloneLxcContainerTool, cloneLxcContainerHandler(client))
 
@@ -68,6 +70,7 @@ func RegisterCloneTools(s *server.MCPServer, client *proxmox.Client) {
 			mcp.Required(),
 			mcp.Description("VM ID to convert to template"),
 		),
+		mcp.WithDestructiveHintAnnotation(false),
 	)
 	s.AddTool(createTemplateTool, createTemplateHandler(client))
 }
@@ -111,9 +114,9 @@ func cloneQemuVmHandler(client *proxmox.Client) server.ToolHandlerFunc {
 		}
 
 		cloneParams := map[string]interface{}{
-			"newid": newID,
-			"name":  name,
-			"full":  fullClone,
+			"newid":  newID,
+			"name":   name,
+			"full":   fullClone,
 			"target": node,
 		}
 
