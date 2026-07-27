@@ -148,22 +148,28 @@ func updateGroupHandler(client *proxmox.Client) server.ToolHandlerFunc {
 			return mcp.NewToolResultError("groupid is required"), nil
 		}
 
-		// Only set Comment when the caller actually supplied one. Setting it
-		// unconditionally meant calling update_group without a comment wiped
-		// the group's existing description.
-		config := px.ConfigGroup{
-			Name: px.GroupName(groupID),
+		// Comment is the only field this tool can change. Sending it
+		// unconditionally wiped an existing description when the caller
+		// omitted it; but omitting it from the config makes the SDK issue no
+		// request at all and still return nil, so reporting success would be
+		// a fabricated result. Require it explicitly instead.
+		raw, supplied := req.GetArguments()["comment"]
+		if !supplied || raw == nil {
+			return mcp.NewToolResultError(
+				"comment is required: it is the only field update_group can change"), nil
 		}
-		if raw, ok := req.GetArguments()["comment"]; ok && raw != nil {
-			comment := req.GetString("comment", "")
-			config.Comment = &comment
+
+		comment := req.GetString("comment", "")
+		config := px.ConfigGroup{
+			Name:    px.GroupName(groupID),
+			Comment: &comment,
 		}
 
 		if err := client.New().Group.Update(ctx, config); err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to update group: %v", err)), nil
 		}
 
-		return mcp.NewToolResultText(fmt.Sprintf("Group '%s' updated", groupID)), nil
+		return mcp.NewToolResultText(fmt.Sprintf("Group '%s' comment updated", groupID)), nil
 	}
 }
 
