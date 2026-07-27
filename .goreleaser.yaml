@@ -21,7 +21,7 @@ builds:
       - -X main.version={{.Version}}
 
 archives:
-  - format: tar.gz
+  - formats: [ tar.gz ]
     name_template: >-
       mcp-proxmox_
       {{- .Version }}_

@@ -28,7 +28,7 @@ func Load() *Config {
 		Password:    os.Getenv("PROXMOX_PASSWORD"),
 		TokenID:     os.Getenv("PROXMOX_TOKEN_ID"),
 		TokenSecret: os.Getenv("PROXMOX_TOKEN_SECRET"),
-		ReadOnly:    getEnvBool("PROXMOX_READ_ONLY", true),  // defaults to TRUE
+		ReadOnly:    getEnvBool("PROXMOX_READ_ONLY", true),     // defaults to TRUE
 		TLSInsecure: getEnvBool("PROXMOX_TLS_INSECURE", false), // defaults to FALSE
 		CAFile:      os.Getenv("PROXMOX_CA_FILE"),
 		Timeout:     getEnvDuration("PROXMOX_HTTP_TIMEOUT", 30*time.Second),

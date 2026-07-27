@@ -89,8 +89,8 @@ func registerTools(s *server.MCPServer, client *proxmox.Client, readOnly bool) {
 	tools.RegisterHATools(s, client)
 	tools.RegisterMetricsTools(s, client)
 	tools.RegisterUserTools(s, client)
-	tools.RegisterGroupTools(s, client)         // read-only only
-	tools.RegisterACMETools(s, client)          // read-only only
+	tools.RegisterGroupTools(s, client) // read-only only
+	tools.RegisterACMETools(s, client)  // read-only only
 	tools.RegisterResourceTools(s, client)
 	tools.RegisterStorageContentTools(s, client)
 	tools.RegisterSnapshotTools(s, client)
