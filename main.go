@@ -70,6 +70,17 @@ func main() {
 		log.Printf("Starting in READ-ONLY mode (default) - write operations disabled")
 	}
 
+	registerTools(s, client, cfg.ReadOnly)
+
+	if err := server.ServeStdio(s); err != nil {
+		log.Fatalf("Server error: %v", err)
+	}
+}
+
+// registerTools adds the tool set appropriate to the mode. Extracted from
+// main so the read-only gate -- the boundary that decides whether destructive
+// tools are exposed at all -- can be tested.
+func registerTools(s *server.MCPServer, client *proxmox.Client, readOnly bool) {
 	// ALWAYS REGISTERED (read-only tools)
 	tools.RegisterNodeTools(s, client)
 	tools.RegisterGuestTools(s, client)
@@ -91,22 +102,19 @@ func main() {
 	tools.RegisterDiskBandwidthTools(s, client)
 
 	// CONDITIONALLY REGISTERED (write tools)
-	if !cfg.ReadOnly {
-		tools.RegisterLifecycleTools(s, client)
-		tools.RegisterCloneTools(s, client)
-		tools.RegisterDiskTools(s, client)
-		tools.RegisterDiskBandwidthWriteTools(s, client)
-		tools.RegisterMigrateTools(s, client)
-		tools.RegisterBackupTools(s, client)
-		tools.RegisterGroupWriteTools(s, client)
-		tools.RegisterACMEWriteTools(s, client)
-		tools.RegisterNodeWriteTools(s, client)
-		log.Printf("Write operations enabled - 9 write tool categories registered")
-	} else {
+	if readOnly {
 		log.Printf("Write operations disabled - 9 write tool categories skipped")
+		return
 	}
 
-	if err := server.ServeStdio(s); err != nil {
-		log.Fatalf("Server error: %v", err)
-	}
+	tools.RegisterLifecycleTools(s, client)
+	tools.RegisterCloneTools(s, client)
+	tools.RegisterDiskTools(s, client)
+	tools.RegisterDiskBandwidthWriteTools(s, client)
+	tools.RegisterMigrateTools(s, client)
+	tools.RegisterBackupTools(s, client)
+	tools.RegisterGroupWriteTools(s, client)
+	tools.RegisterACMEWriteTools(s, client)
+	tools.RegisterNodeWriteTools(s, client)
+	log.Printf("Write operations enabled - 9 write tool categories registered")
 }

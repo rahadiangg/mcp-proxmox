@@ -3,15 +3,16 @@ package config
 import (
 	"os"
 	"testing"
+	"time"
 )
 
 func TestGetEnvBool(t *testing.T) {
 	tests := []struct {
-		name      string
-		setEnv    map[string]string
-		key       string
+		name       string
+		setEnv     map[string]string
+		key        string
 		defaultVal bool
-		want      bool
+		want       bool
 	}{
 		// Truthy values
 		{"true lowercase", map[string]string{"TEST": "true"}, "TEST", false, true},
@@ -157,5 +158,98 @@ func TestReadOnlyFailsClosed(t *testing.T) {
 				t.Errorf("PROXMOX_READ_ONLY=%q must not enable write operations", v)
 			}
 		})
+	}
+}
+
+func TestGetEnvDuration(t *testing.T) {
+	tests := []struct {
+		name  string
+		value string
+		want  time.Duration
+	}{
+		{"duration string", "45s", 45 * time.Second},
+		{"minutes", "2m", 2 * time.Minute},
+		{"bare number is seconds", "90", 90 * time.Second},
+		{"unset uses default", "", 30 * time.Second},
+		{"garbage uses default", "soon", 30 * time.Second},
+		{"zero uses default", "0", 30 * time.Second},
+		{"negative uses default", "-5s", 30 * time.Second},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.value == "" {
+				os.Unsetenv("TEST_DURATION")
+			} else {
+				os.Setenv("TEST_DURATION", tt.value)
+			}
+			defer os.Unsetenv("TEST_DURATION")
+
+			if got := getEnvDuration("TEST_DURATION", 30*time.Second); got != tt.want {
+				t.Errorf("getEnvDuration(%q) = %v, want %v", tt.value, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestGetEnvInt(t *testing.T) {
+	tests := []struct {
+		name  string
+		value string
+		want  int
+	}{
+		{"valid", "600", 600},
+		{"unset uses default", "", 300},
+		{"garbage uses default", "many", 300},
+		{"zero uses default", "0", 300},
+		{"negative uses default", "-1", 300},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if tt.value == "" {
+				os.Unsetenv("TEST_INT")
+			} else {
+				os.Setenv("TEST_INT", tt.value)
+			}
+			defer os.Unsetenv("TEST_INT")
+
+			if got := getEnvInt("TEST_INT", 300); got != tt.want {
+				t.Errorf("getEnvInt(%q) = %d, want %d", tt.value, got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTLSDefaultsToVerifying(t *testing.T) {
+	os.Unsetenv("PROXMOX_TLS_INSECURE")
+	if config := Load(); config.TLSInsecure {
+		t.Error("TLS verification must be enabled by default")
+	}
+
+	// And a typo must not silently disable it.
+	os.Setenv("PROXMOX_TLS_INSECURE", "tru")
+	defer os.Unsetenv("PROXMOX_TLS_INSECURE")
+	if Load().TLSInsecure {
+		t.Error("an unrecognized value must not disable TLS verification")
+	}
+}
+
+func TestHasCredentials(t *testing.T) {
+	for _, key := range []string{"PROXMOX_TOKEN_ID", "PROXMOX_TOKEN_SECRET", "PROXMOX_USERNAME", "PROXMOX_PASSWORD"} {
+		os.Unsetenv(key)
+	}
+	if Load().HasCredentials() {
+		t.Error("no credentials configured should report false")
+	}
+
+	os.Setenv("PROXMOX_USERNAME", "root@pam")
+	os.Setenv("PROXMOX_PASSWORD", "pw")
+	defer func() {
+		os.Unsetenv("PROXMOX_USERNAME")
+		os.Unsetenv("PROXMOX_PASSWORD")
+	}()
+	if !Load().HasCredentials() {
+		t.Error("username and password should count as credentials")
 	}
 }

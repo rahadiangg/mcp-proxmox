@@ -2,272 +2,169 @@ package main
 
 import (
 	"os"
+	"sort"
 	"testing"
 
+	"github.com/mark3labs/mcp-go/server"
+
 	"github.com/rahadiangg/mcp-proxmox/config"
+	"github.com/rahadiangg/mcp-proxmox/proxmox"
 )
 
-func TestDefaultModeReadOnly(t *testing.T) {
-	// Ensure PROXMOX_READ_ONLY is not set
+// writeTools are the tools that can change cluster state. None of them may be
+// registered while read-only mode is on.
+var writeTools = []string{
+	"start_guest", "stop_guest", "shutdown_guest", "reboot_guest",
+	"pause_guest", "resume_guest", "hibernate_guest", "delete_guest",
+	"clone_qemu_vm", "clone_lxc_container", "create_template",
+	"resize_disk", "set_disk_bandwidth", "clear_disk_bandwidth",
+	"migrate_guest", "backup_guest",
+	"create_group", "update_group", "delete_group",
+	"delete_acme_account", "delete_acme_plugin",
+	"reboot_node", "shutdown_node",
+}
+
+func registeredNames(t *testing.T, readOnly bool) []string {
+	t.Helper()
+	s := server.NewMCPServer("test", "test")
+	registerTools(s, &proxmox.Client{}, readOnly)
+
+	names := make([]string, 0)
+	for name := range s.ListTools() {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	return names
+}
+
+// TestReadOnlyModeHidesWriteTools is the test this gate never had. It was 0%
+// covered: the tests that claimed to cover it counted hand-written string
+// literals instead of calling the registration path, so deleting the entire
+// gate would not have failed a single one.
+func TestReadOnlyModeHidesWriteTools(t *testing.T) {
+	present := make(map[string]bool)
+	for _, n := range registeredNames(t, true) {
+		present[n] = true
+	}
+
+	for _, w := range writeTools {
+		if present[w] {
+			t.Errorf("%s must not be registered in read-only mode", w)
+		}
+	}
+
+	// Read-only mode should still expose something useful.
+	for _, r := range []string{"list_nodes", "list_guests", "get_guest_info"} {
+		if !present[r] {
+			t.Errorf("%s should be available in read-only mode", r)
+		}
+	}
+}
+
+func TestWriteModeExposesWriteTools(t *testing.T) {
+	present := make(map[string]bool)
+	for _, n := range registeredNames(t, false) {
+		present[n] = true
+	}
+
+	for _, w := range writeTools {
+		if !present[w] {
+			t.Errorf("%s should be registered when write mode is enabled", w)
+		}
+	}
+}
+
+// TestWriteModeAddsExactlyTheWriteTools proves the two modes differ by
+// precisely the write set, so no tool leaks across the boundary either way.
+func TestWriteModeAddsExactlyTheWriteTools(t *testing.T) {
+	readOnly := registeredNames(t, true)
+	full := registeredNames(t, false)
+
+	inReadOnly := make(map[string]bool, len(readOnly))
+	for _, n := range readOnly {
+		inReadOnly[n] = true
+	}
+
+	var added []string
+	for _, n := range full {
+		if !inReadOnly[n] {
+			added = append(added, n)
+		}
+	}
+	sort.Strings(added)
+
+	expected := append([]string(nil), writeTools...)
+	sort.Strings(expected)
+
+	if len(added) != len(expected) {
+		t.Fatalf("write mode added %d tools, expected %d\n added: %v\nexpect: %v",
+			len(added), len(expected), added, expected)
+	}
+	for i := range added {
+		if added[i] != expected[i] {
+			t.Errorf("write-mode difference mismatch at %d: got %s, want %s", i, added[i], expected[i])
+		}
+	}
+}
+
+func TestDefaultModeIsReadOnly(t *testing.T) {
 	os.Unsetenv("PROXMOX_READ_ONLY")
-	defer os.Unsetenv("PROXMOX_READ_ONLY")
-
-	cfg := config.Load()
-	if !cfg.ReadOnly {
-		t.Errorf("Default mode should be read-only, got ReadOnly=%v", cfg.ReadOnly)
+	if !config.Load().ReadOnly {
+		t.Error("the default mode must be read-only")
 	}
 }
 
-func TestWriteModeEnv(t *testing.T) {
-	os.Setenv("PROXMOX_READ_ONLY", "false")
-	defer os.Unsetenv("PROXMOX_READ_ONLY")
-
-	cfg := config.Load()
-	if cfg.ReadOnly {
-		t.Errorf("Write mode should disable read-only flag, got ReadOnly=%v", cfg.ReadOnly)
-	}
-}
-
-func TestExplicitReadOnlyMode(t *testing.T) {
-	os.Setenv("PROXMOX_READ_ONLY", "true")
-	defer os.Unsetenv("PROXMOX_READ_ONLY")
-
-	cfg := config.Load()
-	if !cfg.ReadOnly {
-		t.Errorf("Explicit read-only mode should set ReadOnly=true, got %v", cfg.ReadOnly)
-	}
-}
-
-// Test that all write tool registration functions compile correctly
-func TestWriteToolRegistrationCompile(t *testing.T) {
-	// This is a compile-time test to ensure the write tool registration functions exist
-	// We don't actually run them here - they're tested indirectly via the main() function
-	_ = func() {
-		// If this compiles, the functions are properly exported
-		var registerNodeWriteTools func(interface{}, interface{})
-		var registerGroupWriteTools func(interface{}, interface{})
-		var registerACMEWriteTools func(interface{}, interface{})
-		_, _, _ = registerNodeWriteTools, registerGroupWriteTools, registerACMEWriteTools
-	}
-}
-
-// Test environment variable parsing
-func TestEnvVariableParsing(t *testing.T) {
-	// Test with truthy values
-	testCases := []struct {
-		name     string
-		value    string
-		expected bool
-	}{
-		{"true value", "true", true},
-		{"false value", "false", false},
-		{"empty value (defaults to true)", "", true},
-		{"1 value", "1", true},
-		{"0 value", "0", false},
-		{"yes value", "yes", true},
-		{"no value", "no", false},
+func TestWriteModeRequiresExplicitOptIn(t *testing.T) {
+	cases := map[string]bool{
+		"false":   false, // the only way to opt in
+		"0":       false,
+		"true":    true,
+		"":        true,
+		"garbage": true, // a typo must never enable writes
 	}
 
-	for _, tc := range testCases {
-		t.Run(tc.name, func(t *testing.T) {
-			os.Setenv("PROXMOX_READ_ONLY", tc.value)
-			cfg := config.Load()
-			if (cfg.ReadOnly) != tc.expected {
-				t.Errorf("PROXMOX_READ_ONLY=%s: expected ReadOnly=%v, got %v", tc.value, tc.expected, cfg.ReadOnly)
+	for value, wantReadOnly := range cases {
+		t.Run(value, func(t *testing.T) {
+			if value == "" {
+				os.Unsetenv("PROXMOX_READ_ONLY")
+			} else {
+				os.Setenv("PROXMOX_READ_ONLY", value)
+			}
+			defer os.Unsetenv("PROXMOX_READ_ONLY")
+
+			if got := config.Load().ReadOnly; got != wantReadOnly {
+				t.Errorf("PROXMOX_READ_ONLY=%q gave ReadOnly=%v, want %v", value, got, wantReadOnly)
 			}
 		})
 	}
-	os.Unsetenv("PROXMOX_READ_ONLY")
 }
 
-// Test tool categories count
-func TestToolCategoriesCount(t *testing.T) {
-	// Verify the expected number of tool categories
-	readOnlyCategories := []string{
-		"RegisterNodeTools",
-		"RegisterGuestTools",
-		"RegisterStorageTools",
-		"RegisterPoolTools",
-		"RegisterHATools",
-		"RegisterMetricsTools",
-		"RegisterUserTools",
-		"RegisterGroupTools",
-		"RegisterACMETools",
-		"RegisterResourceTools",
-		"RegisterStorageContentTools",
-		"RegisterSnapshotTools",
-		"RegisterQemuAgentTools",
-		"RegisterNodeNetworkTools",
-		"RegisterNetworkTools",
-		"RegisterFirewallTools",
-		"RegisterCreateTools",
-		"RegisterDiskBandwidthTools",
+// TestCredentialsAreRequired covers the fail-fast added to main: without it a
+// credential-less server started happily and failed on every tool call.
+func TestCredentialsAreRequired(t *testing.T) {
+	for _, key := range []string{"PROXMOX_TOKEN_ID", "PROXMOX_TOKEN_SECRET", "PROXMOX_USERNAME", "PROXMOX_PASSWORD"} {
+		os.Unsetenv(key)
+	}
+	if config.Load().HasCredentials() {
+		t.Error("expected HasCredentials to be false with nothing configured")
 	}
 
-	writeCategories := []string{
-		"RegisterLifecycleTools",
-		"RegisterCloneTools",
-		"RegisterDiskTools",
-		"RegisterDiskBandwidthWriteTools",
-		"RegisterMigrateTools",
-		"RegisterBackupTools",
-		"RegisterGroupWriteTools",
-		"RegisterACMEWriteTools",
-		"RegisterNodeWriteTools",
-	}
-
-	if len(readOnlyCategories) != 18 {
-		t.Errorf("Expected 18 read-only categories, got %d", len(readOnlyCategories))
-	}
-
-	if len(writeCategories) != 9 {
-		t.Errorf("Expected 9 write categories, got %d", len(writeCategories))
-	}
-
-	totalCategories := len(readOnlyCategories) + len(writeCategories)
-	if totalCategories != 27 {
-		t.Errorf("Expected 27 total categories, got %d", totalCategories)
+	os.Setenv("PROXMOX_TOKEN_ID", "root@pam!mcp")
+	os.Setenv("PROXMOX_TOKEN_SECRET", "secret")
+	defer func() {
+		os.Unsetenv("PROXMOX_TOKEN_ID")
+		os.Unsetenv("PROXMOX_TOKEN_SECRET")
+	}()
+	if !config.Load().HasCredentials() {
+		t.Error("expected HasCredentials to be true once a token is configured")
 	}
 }
 
-func TestToolCategoryCounts_Detailed(t *testing.T) {
-	// Test that we have the expected number of tools in each category
-	
-	// Read-only tool categories (18)
-	readOnlyCategories := []struct {
-		name  string
-		count int
-	}{
-		{"RegisterNodeTools", 2},         // list_nodes, get_node_status
-		{"RegisterGuestTools", 6},        // list_guests, get_guest_info, get_guest_config, get_guest_status, get_guest_by_name
-		{"RegisterStorageTools", 3},      // list_storage, get_storage_status, get_storage_config
-		{"RegisterPoolTools", 1},         // list_pools
-		{"RegisterHATools", 1},           // list_ha_groups
-		{"RegisterMetricsTools", 1},      // list_metrics_servers
-		{"RegisterUserTools", 1},         // list_users
-		{"RegisterGroupTools", 2},        // list_groups, get_group
-		{"RegisterACMETools", 3},         // list_acme_accounts, get_acme_account, list_acme_plugins
-		{"RegisterResourceTools", 1},     // list_resources
-		{"RegisterStorageContentTools", 1}, // get_storage_content
-		{"RegisterSnapshotTools", 1},     // list_snapshots
-		{"RegisterQemuAgentTools", 1},    // ping_qemu_agent
-		{"RegisterNodeNetworkTools", 1},  // get_node_network
-		{"RegisterNetworkTools", 1},      // get_guest_agent_network
-		{"RegisterFirewallTools", 1},     // get_guest_firewall_options
-		{"RegisterCreateTools", 1},       // get_next_vmid
-		{"RegisterDiskBandwidthTools", 3}, // get_disk_bandwidth, set_disk_bandwidth, clear_disk_bandwidth
-	}
-	
-	// Write tool categories (9)
-	writeCategories := []struct {
-		name  string
-		count int
-	}{
-		{"RegisterLifecycleTools", 8},    // start, stop, shutdown, reboot, pause, resume, hibernate, delete
-		{"RegisterCloneTools", 3},        // clone_qemu_vm, clone_lxc_container, create_template
-		{"RegisterDiskTools", 1},         // resize_disk
-		{"RegisterDiskBandwidthWriteTools", 0}, // already counted in read-only
-		{"RegisterMigrateTools", 1},      // migrate_guest
-		{"RegisterBackupTools", 1},       // backup_guest
-		{"RegisterGroupWriteTools", 2},   // create_group, update_group, delete_group
-		{"RegisterACMEWriteTools", 2},    // delete_acme_account, delete_acme_plugin
-		{"RegisterNodeWriteTools", 2},    // reboot_node, shutdown_node
-	}
-	
-	totalReadOnlyTools := 0
-	for _, cat := range readOnlyCategories {
-		totalReadOnlyTools += cat.count
-	}
-	
-	totalWriteTools := 0
-	for _, cat := range writeCategories {
-		totalWriteTools += cat.count
-	}
-	
-	// Expected totals based on implementation
-	if totalReadOnlyTools != 29 {
-		t.Logf("Warning: Expected 29 read-only tools, got %d", totalReadOnlyTools)
-	}
-	
-	if totalWriteTools != 21 {
-		t.Logf("Warning: Expected 21 write tools, got %d", totalWriteTools)
-	}
-}
-
-func TestEnvironmentVariableDefaults(t *testing.T) {
-	// Test that default values are correct when env vars are not set
-	
-	t.Run("default API URL format", func(t *testing.T) {
-		// API URL should be required - no default
-		// This test verifies the expected behavior
-		expectedURL := ""
-		if expectedURL != "" {
-			t.Error("API URL should not have a default value")
-		}
-	})
-	
-	t.Run("default credentials", func(t *testing.T) {
-		// Username and password should be required - no defaults
-		expectedUsername := ""
-		expectedPassword := ""
-		if expectedUsername != "" || expectedPassword != "" {
-			t.Error("Credentials should not have default values")
-		}
-	})
-}
-
-func TestToolRegistration_AllCategories(t *testing.T) {
-	// Verify all registration function names exist and are correct
-	categories := []struct {
-		name           string
-		isReadOnly     bool
-		expectedTools  int
-	}{
-		{"RegisterNodeTools", true, 2},
-		{"RegisterGuestTools", true, 6},
-		{"RegisterStorageTools", true, 3},
-		{"RegisterPoolTools", true, 1},
-		{"RegisterHATools", true, 1},
-		{"RegisterMetricsTools", true, 1},
-		{"RegisterUserTools", true, 1},
-		{"RegisterGroupTools", true, 2},
-		{"RegisterACMETools", true, 3},
-		{"RegisterResourceTools", true, 1},
-		{"RegisterStorageContentTools", true, 1},
-		{"RegisterSnapshotTools", true, 1},
-		{"RegisterQemuAgentTools", true, 1},
-		{"RegisterNodeNetworkTools", true, 1},
-		{"RegisterNetworkTools", true, 1},
-		{"RegisterFirewallTools", true, 1},
-		{"RegisterCreateTools", true, 1},
-		{"RegisterDiskBandwidthTools", true, 3},
-		{"RegisterLifecycleTools", false, 8},
-		{"RegisterCloneTools", false, 3},
-		{"RegisterDiskTools", false, 1},
-		{"RegisterDiskBandwidthWriteTools", false, 0},
-		{"RegisterMigrateTools", false, 1},
-		{"RegisterBackupTools", false, 1},
-		{"RegisterGroupWriteTools", false, 3},
-		{"RegisterACMEWriteTools", false, 2},
-		{"RegisterNodeWriteTools", false, 2},
-	}
-	
-	totalReadOnlyCategories := 0
-	totalWriteCategories := 0
-	
-	for _, cat := range categories {
-		if cat.isReadOnly {
-			totalReadOnlyCategories++
-		} else {
-			totalWriteCategories++
-		}
-	}
-	
-	if totalReadOnlyCategories != 18 {
-		t.Errorf("Expected 18 read-only categories, got %d", totalReadOnlyCategories)
-	}
-	
-	if totalWriteCategories != 9 {
-		t.Errorf("Expected 9 write categories, got %d", totalWriteCategories)
+func TestVersionIsInjectable(t *testing.T) {
+	// The release build injects this via -ldflags -X main.version. The symbol
+	// must exist, or the flag is silently ignored and the server misreports
+	// its version forever.
+	if version == "" {
+		t.Error("version must have a default value")
 	}
 }
