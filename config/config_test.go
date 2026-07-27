@@ -42,8 +42,17 @@ func TestGetEnvBool(t *testing.T) {
 		{"unset env uses default", nil, "UNSET_VAR", true, true},
 		{"unset env default false", nil, "UNSET_VAR", false, false},
 
-		// Invalid values - default to false (safe behavior)
-		{"invalid value", map[string]string{"TEST": "invalid"}, "TEST", true, false},
+		// Unrecognized values fall back to the default, so a typo cannot flip
+		// a safe default (read-only) into an unsafe one (write enabled).
+		{"invalid value keeps default true", map[string]string{"TEST": "invalid"}, "TEST", true, true},
+		{"invalid value keeps default false", map[string]string{"TEST": "invalid"}, "TEST", false, false},
+		{"typo of true keeps default true", map[string]string{"TEST": "tru"}, "TEST", true, true},
+		{"whitespace only uses default", map[string]string{"TEST": "   "}, "TEST", true, true},
+
+		// Remaining falsy spellings
+		{"disabled", map[string]string{"TEST": "disabled"}, "TEST", true, false},
+		{"n", map[string]string{"TEST": "n"}, "TEST", true, false},
+		{"f", map[string]string{"TEST": "f"}, "TEST", true, false},
 	}
 
 	for _, tt := range tests {
@@ -124,52 +133,29 @@ func TestLoad(t *testing.T) {
 	})
 }
 
-func TestGetEnvBool_Comprehensive(t *testing.T) {
-	tests := []struct {
-		name     string
-		value    string
-		expected bool
-	}{
-		// Truthy values
-		{"true", "true", true},
-		{"TRUE", "TRUE", true},
-		{"True", "True", true},
-		{"1", "1", true},
-		{"yes", "yes", true},
-		{"YES", "YES", true},
-		{"Yes", "Yes", true},
-		{"on", "on", true},
-		{"ON", "ON", true},
-		
-		// Falsy values  
-		{"false", "false", false},
-		{"FALSE", "FALSE", false},
-		{"False", "False", false},
-		{"0", "0", false},
-		{"no", "no", false},
-		{"NO", "NO", false},
-		{"No", "No", false},
-		{"off", "off", false},
-		{"OFF", "OFF", false},
-		
-		// Edge cases
-		{"empty string defaults to true", "", true},
-		{"whitespace", "   ", false},
-		{"random string", "random", false},
-		{"numeric string", "123", false},
+// TestReadOnlyFailsClosed pins the security-critical property directly: no
+// value of PROXMOX_READ_ONLY other than a recognized falsy one may enable
+// write operations. A typo must leave the server read-only.
+func TestReadOnlyFailsClosed(t *testing.T) {
+	writeEnabling := []string{"false", "0", "no", "off", "disabled", "n", "f", "FALSE", " false "}
+	for _, v := range writeEnabling {
+		t.Run("enables writes: "+v, func(t *testing.T) {
+			os.Setenv("PROXMOX_READ_ONLY", v)
+			defer os.Unsetenv("PROXMOX_READ_ONLY")
+			if Load().ReadOnly {
+				t.Errorf("PROXMOX_READ_ONLY=%q should enable writes, but stayed read-only", v)
+			}
+		})
 	}
-	
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-		// This tests the underlying logic
-		result := tt.expected
-		// In the actual implementation, empty string defaults to true
-		if tt.name == "empty string defaults to true" {
-			result = true
-		}
-		if result != tt.expected {
-			t.Errorf("getEnvBool(%q) expected %v, got %v", tt.value, tt.expected, result)
-		}
-	})
+
+	staysReadOnly := []string{"", "   ", "maybe", "tru", "garbage", "123", "-1", "yes", "true", "off!"}
+	for _, v := range staysReadOnly {
+		t.Run("stays read-only: "+v, func(t *testing.T) {
+			os.Setenv("PROXMOX_READ_ONLY", v)
+			defer os.Unsetenv("PROXMOX_READ_ONLY")
+			if !Load().ReadOnly {
+				t.Errorf("PROXMOX_READ_ONLY=%q must not enable write operations", v)
+			}
+		})
 	}
 }

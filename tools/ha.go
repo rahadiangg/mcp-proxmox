@@ -17,11 +17,24 @@ func RegisterHATools(s *server.MCPServer, client *proxmox.Client) {
 
 func listHAGroupsHandler(client *proxmox.Client) server.ToolHandlerFunc {
 	return func(ctx context.Context, req mcp.CallToolRequest) (*mcp.CallToolResult, error) {
-		haGroups, err := client.GetHAGroupList(ctx)
+		// Deliberately not client.GetHAGroupList: it type-asserts optional
+		// fields (comment, nofailback, restricted) without a comma-ok, so a
+		// group created without a comment panics inside the SDK. This handler
+		// only serializes to JSON, so the typed struct buys nothing.
+		list, err := client.GetItemList(ctx, "/cluster/ha/groups")
 		if err != nil {
 			return mcp.NewToolResultError(fmt.Sprintf("Failed to list HA groups: %v", err)), nil
 		}
-		result, _ := json.MarshalIndent(haGroups, "", "  ")
+
+		groups := []interface{}{}
+		if data, ok := list["data"].([]interface{}); ok {
+			groups = data
+		}
+
+		result, err := json.MarshalIndent(groups, "", "  ")
+		if err != nil {
+			return mcp.NewToolResultError(fmt.Sprintf("Failed to encode HA groups: %v", err)), nil
+		}
 		return mcp.NewToolResultText(string(result)), nil
 	}
 }

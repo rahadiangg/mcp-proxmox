@@ -1,8 +1,8 @@
 package config
 
 import (
+	"log"
 	"os"
-	"strconv"
 	"strings"
 )
 
@@ -33,19 +33,23 @@ func getEnv(key, defaultVal string) string {
 	return defaultVal
 }
 
+// getEnvBool reads a boolean environment variable, falling back to defaultVal.
+//
+// Unrecognized values fall back to defaultVal rather than false. This matters
+// for PROXMOX_READ_ONLY: treating garbage as false would let a typo such as
+// "tru" silently enable write operations on a cluster.
 func getEnvBool(key string, defaultVal bool) bool {
-	val := strings.ToLower(strings.TrimSpace(os.Getenv(key)))
+	raw := os.Getenv(key)
+	val := strings.ToLower(strings.TrimSpace(raw))
 	if val == "" {
 		return defaultVal
 	}
-	// Truthy: 1, true, yes, on, enabled, y, t
 	switch val {
 	case "1", "true", "yes", "on", "enabled", "y", "t":
 		return true
+	case "0", "false", "no", "off", "disabled", "n", "f":
+		return false
 	}
-	// Use strconv.ParseBool as fallback, default false for unknown
-	if parsed, err := strconv.ParseBool(val); err == nil {
-		return parsed
-	}
-	return false
+	log.Printf("WARNING: %s has unrecognized value %q; using default %v", key, raw, defaultVal)
+	return defaultVal
 }

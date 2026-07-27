@@ -11,8 +11,16 @@ import (
 	"github.com/rahadiangg/mcp-proxmox/tools"
 )
 
+// version is overridden at release time via -ldflags "-X main.version=...".
+var version = "dev"
+
 func main() {
-	godotenv.Load()
+	if err := godotenv.Load(); err != nil {
+		// .env resolves against the working directory of whatever launched
+		// this server, which for an MCP host is often not the project dir.
+		// Say so rather than silently falling back to the process env.
+		log.Printf("No .env file loaded (%v); using process environment", err)
+	}
 
 	cfg := config.Load()
 	var client *proxmox.Client
@@ -30,8 +38,12 @@ func main() {
 
 	s := server.NewMCPServer(
 		"Proxmox MCP Server",
-		"1.0.0",
+		version,
 		server.WithToolCapabilities(true),
+		// A panic in one handler must not take the whole server down with it.
+		// The Proxmox SDK does unchecked type assertions on optional API
+		// fields, so this is a real risk rather than a theoretical one.
+		server.WithRecovery(),
 	)
 
 	// Log read-only mode status
